@@ -30,6 +30,7 @@ const GUIONES = {
       id: "https-nueva",
       titulo: "Una muestra por HTTPS, conexión nueva",
       resumen: "El recorrido completo: saludo TCP, cifrado TLS, petición, respuesta y cierre.",
+      caso: "Un sensor a batería en una bomba de agua despierta cada 15 minutos, manda su lectura y vuelve a dormir. Entre envío y envío apaga la radio, así que cada muestra empieza de cero: saludo, certificados y todo lo demás, otra vez.",
       actores: ["Dispositivo", "Servidor"],
       pasos: [
         { de: 0, a: 1, etiqueta: "SYN", bytes: 74, clase: "tcp",
@@ -60,6 +61,7 @@ const GUIONES = {
       id: "https-keepalive",
       titulo: "La segunda muestra, con keep-alive",
       resumen: "La conexión ya está abierta. Mismo dato, una fracción del costo.",
+      caso: "El mismo sensor, pero alimentado de la red eléctrica y reportando cada 5 segundos. Como nunca apaga la radio, aprovecha la conexión que ya tenía abierta en vez de volver a montarla.",
       actores: ["Dispositivo", "Servidor"],
       pasos: [
         { de: 0, a: 1, etiqueta: "POST /telemetry", bytes: 280, utiles: 26, clase: "app",
@@ -74,6 +76,7 @@ const GUIONES = {
       id: "http-503",
       titulo: "El servidor falla: 503 y backoff",
       resumen: "Qué hace un firmware bien escrito cuando el servidor no está disponible.",
+      caso: "Sábado a las 3 de la mañana: el proveedor reinicia el servidor por mantenimiento. Durante dos minutos nada responde, y los 500 dispositivos de la flota siguen enviando su telemetría como si nada.",
       actores: ["Dispositivo", "Servidor"],
       pasos: [
         { de: 0, a: 1, etiqueta: "POST /telemetry", bytes: 280, utiles: 26, clase: "app",
@@ -99,6 +102,7 @@ const GUIONES = {
       id: "http-400",
       titulo: "El error es tuyo: 400",
       resumen: "El caso en el que reintentar es exactamente lo que NO hay que hacer.",
+      caso: "Se actualizó el firmware y alguien renombró un campo del JSON. El servidor rechaza cada muestra, y si el dispositivo está mal programado lo reintentará cada segundo hasta quedarse sin batería, repitiendo para siempre el mismo error.",
       actores: ["Dispositivo", "Servidor"],
       pasos: [
         { de: 0, a: 1, etiqueta: "POST /telemetry", bytes: 262, utiles: 18, clase: "app",
@@ -115,6 +119,7 @@ const GUIONES = {
       id: "http-polling",
       titulo: "Polling: el costo de preguntar",
       resumen: "Cómo se entera un dispositivo HTTP de que la nube quiere algo.",
+      caso: "El operador baja el umbral de temperatura desde el panel a las 10:00:00 porque el tanque se está calentando. El dispositivo preguntó a las 09:59:50 y no volverá a preguntar hasta las 10:00:50: durante ese minuto sigue con la configuración vieja.",
       actores: ["Dispositivo", "Servidor"],
       pasos: [
         { de: 0, a: 1, etiqueta: "GET /config", bytes: 145, clase: "app",
@@ -140,6 +145,7 @@ const GUIONES = {
       id: "mqtt-conexion",
       titulo: "Conectarse y suscribirse",
       resumen: "Lo que ocurre una sola vez, al principio de todo.",
+      caso: "El tanque se acaba de instalar en planta y se enciende por primera vez. Antes de mandar un solo dato tiene que presentarse: decir quién es, cuánto va a tardar en dar señales de vida y qué quiere escuchar.",
       actores: ["Dispositivo", "Broker"],
       pasos: [
         { de: 0, a: 1, etiqueta: "Handshake TCP + TLS", bytes: 4614, clase: "tls",
@@ -160,6 +166,7 @@ const GUIONES = {
       id: "mqtt-qos0",
       titulo: "PUBLISH con QoS 0",
       resumen: "La telemetría normal: un paquete y nada más.",
+      caso: "Operación de todos los días: el sensor reporta nivel y temperatura cada 10 segundos, las 24 horas. Si una muestra se pierde en el camino, la siguiente llega enseguida y nadie lo nota.",
       actores: ["Dispositivo", "Broker"],
       pasos: [
         { de: 0, a: 1, etiqueta: "PUBLISH …/telemetria", bytes: 86, utiles: 26, clase: "app",
@@ -172,6 +179,7 @@ const GUIONES = {
       id: "mqtt-qos1",
       titulo: "QoS 1: «al menos una vez» (y el duplicado)",
       resumen: "Por qué el problema de los duplicados no desaparece con MQTT.",
+      caso: "La señal celular está débil dentro de la nave industrial. La confirmación del broker se pierde a mitad de camino y el dispositivo, que no sabe si su lectura llegó, la reenvía: en la base de datos aparece el mismo consumo dos veces.",
       actores: ["Dispositivo", "Broker"],
       pasos: [
         { de: 0, a: 1, etiqueta: "PUBLISH (id 1, QoS 1)", bytes: 88, utiles: 26, clase: "app",
@@ -193,6 +201,7 @@ const GUIONES = {
       id: "mqtt-qos2",
       titulo: "QoS 2: «exactamente una vez»",
       resumen: "La garantía fuerte y lo que cuesta.",
+      caso: "La orden de cerrar la válvula principal, o el registro que va a la factura del cliente. Aquí que el mensaje llegue dos veces no es un detalle menor: tiene que llegar exactamente una vez, y se paga el precio.",
       actores: ["Dispositivo", "Broker"],
       pasos: [
         { de: 0, a: 1, etiqueta: "PUBLISH (id 7, QoS 2)", bytes: 88, utiles: 26, clase: "app",
@@ -210,6 +219,7 @@ const GUIONES = {
       id: "mqtt-enrutado",
       titulo: "El broker reparte: enrutado por topic",
       resumen: "Un publicador, varios suscriptores, y nadie se conoce.",
+      caso: "Mantenimiento pide un tablero propio para su planta y, la misma semana, el área de seguridad pide alertas de todo. Ninguno de los dos va a tocar los 500 dispositivos ya instalados en campo: se suscriben y listo.",
       actores: ["Dispositivo", "Broker", "Dashboard", "Alertas"],
       pasos: [
         { de: 2, a: 1, etiqueta: "SUBSCRIBE fablab/+/+/telemetria", bytes: 42, clase: "control",
@@ -229,6 +239,7 @@ const GUIONES = {
       id: "mqtt-keepalive",
       titulo: "Keepalive: el latido que mantiene el agujero abierto",
       resumen: "Cuatro bytes cada 30 segundos y por qué son imprescindibles.",
+      caso: "Son las 3 de la mañana y no hay nada que reportar: el tanque lleva 40 minutos en silencio. Si no diera señales de vida, el router de la planta daría la conexión por muerta y la cerraría, y el operador ya no podría mandarle ninguna orden.",
       actores: ["Dispositivo", "Broker"],
       pasos: [
         { de: 0, a: 1, etiqueta: "PINGREQ", bytes: 2, clase: "control",
@@ -242,6 +253,7 @@ const GUIONES = {
       id: "mqtt-retenido",
       titulo: "Retenido: el suscriptor que llega tarde",
       resumen: "Cómo ve el estado actual alguien que se conecta después.",
+      caso: "Llegas a la oficina a las 8 de la mañana y abres el tablero. El tanque reporta cada 10 minutos y acabó de hacerlo hace 9: sin mensajes retenidos, estarías mirando una pantalla en blanco durante nueve minutos sin saber si el equipo está vivo.",
       actores: ["Dispositivo", "Broker", "Dashboard"],
       pasos: [
         { de: 0, a: 1, etiqueta: 'PUBLISH …/estado "online" (retain)', bytes: 48, utiles: 6, clase: "app",
@@ -257,6 +269,7 @@ const GUIONES = {
       id: "mqtt-sesion",
       titulo: "Sesión persistente: tu cola privada",
       resumen: "Qué pasa con los mensajes de un suscriptor que estaba desconectado.",
+      caso: "El servidor del tablero se reinicia por una actualización y queda tres minutos fuera de línea. Justo en esos tres minutos se publican dos alarmas de nivel alto. Al volver, ¿las ve o se perdieron para siempre?",
       actores: ["Dispositivo", "Broker", "Dashboard"],
       pasos: [
         { de: 2, a: 1, etiqueta: "CONNECT (clean start: false) + SUBSCRIBE QoS 1", bytes: 96, clase: "control",
@@ -278,6 +291,7 @@ const GUIONES = {
       id: "mqtt-lwt",
       titulo: "Testamento: detectar un dispositivo caído",
       resumen: "Lo que HTTP no puede hacer de ninguna manera.",
+      caso: "Se va la luz en la planta, o alguien desenchufa el gabinete sin avisar. El dispositivo no alcanza a despedirse de nadie: simplemente deja de existir para la red. ¿Cómo se entera el tablero de que ese tanque ya no está reportando?",
       actores: ["Dispositivo", "Broker", "Dashboard"],
       pasos: [
         { de: 0, a: 1, etiqueta: 'CONNECT (will: …/estado = "offline")', bytes: 62, clase: "control",

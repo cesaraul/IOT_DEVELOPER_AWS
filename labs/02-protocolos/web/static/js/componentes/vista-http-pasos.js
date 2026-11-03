@@ -45,6 +45,13 @@ window.Componentes.VistaHttpPasos = {
     </button>
   </div>
 
+  <transition name="desvanecer" mode="out-in">
+    <div class="caso caso-http" :key="guion.id">
+      <span class="caso-etiqueta">Cuándo pasa esto en la vida real</span>
+      <p>{{ guion.caso }}</p>
+    </div>
+  </transition>
+
   <diagrama-secuencia :guion="guion" :key="guion.id"></diagrama-secuencia>
 
   <h3>Los códigos de estado, leídos como decisiones de tu firmware</h3>

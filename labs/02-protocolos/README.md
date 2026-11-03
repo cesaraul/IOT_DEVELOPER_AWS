@@ -150,6 +150,10 @@ los bytes con los de L2 de HTTP.
 El laboratorio no es solo una demo: **tus clientes pueden entrar al mismo
 sistema** y aparecerán en la interfaz junto al dispositivo simulado.
 
+> En [`ejemplos/`](ejemplos/) tienes dos clientes listos para usar —uno en
+> Python y uno para **ESP32**— con sus instrucciones, los requisitos y cómo
+> ejecutarlos **sin instalar Python** si hiciera falta.
+
 ```python
 # HTTP
 import requests

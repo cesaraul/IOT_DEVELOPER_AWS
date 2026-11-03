@@ -73,6 +73,23 @@ main { padding: 24px; max-width: none; margin: 0; width: 100%; }
 .escenario strong { display: block; font-size: 16.5px; margin-bottom: 3px; }
 .escenario small { display: block; color: var(--suave); font-size: 14.5px; line-height: 1.4; }
 
+/* ---------------------------------------------- el caso real del escenario */
+
+.caso {
+  margin-bottom: 18px; padding: 18px 22px;
+  border-radius: 12px; border-left: 5px solid var(--suave);
+  background: var(--papel);
+}
+.caso-http { border-left-color: var(--http); background: var(--http-claro); }
+.caso-mqtt { border-left-color: var(--mqtt); background: var(--mqtt-claro); }
+.caso-etiqueta {
+  display: block; margin-bottom: 6px;
+  font-size: 13px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+}
+.caso-http .caso-etiqueta { color: var(--http); }
+.caso-mqtt .caso-etiqueta { color: var(--mqtt); }
+.caso p { margin: 0; font-size: 18.5px; line-height: 1.55; max-width: 100ch; }
+
 /* ---------------------------------------------- diagrama de secuencia */
 
 .diagrama {

@@ -54,6 +54,13 @@ window.Componentes.VistaMqttPasos = {
     </button>
   </div>
 
+  <transition name="desvanecer" mode="out-in">
+    <div class="caso caso-mqtt" :key="guion.id">
+      <span class="caso-etiqueta">Cuándo pasa esto en la vida real</span>
+      <p>{{ guion.caso }}</p>
+    </div>
+  </transition>
+
   <diagrama-secuencia :guion="guion" :key="guion.id"></diagrama-secuencia>
 
   <div class="rejilla-2">

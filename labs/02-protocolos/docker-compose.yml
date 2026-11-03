@@ -27,6 +27,20 @@ services:
       broker:
         condition: service_healthy
 
+  # No arranca con "docker compose up": es para correr los ejemplos sin
+  # instalar Python.   docker compose run --rm cliente python publicar.py
+  cliente:
+    build: ./ejemplos/python
+    profiles: ["ejemplos"]
+    environment:
+      MQTT_HOST: broker
+      MQTT_PORT: "1883"
+    volumes:
+      - ./ejemplos/python:/srv
+    depends_on:
+      broker:
+        condition: service_healthy
+
   simulador:
     build: ./simulador
     container_name: lab-simulador
