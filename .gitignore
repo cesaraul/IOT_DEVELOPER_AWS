@@ -1,0 +1,39 @@
+# --- Credenciales y material sensible: NUNCA subir ---
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+certs/
+certificates/
+.env
+.env.*
+!.env.example
+credentials
+aws_credentials*
+*.secret
+*_secret*
+
+# --- Material interno del curso (vive fuera de este repo) ---
+_privado/
+soluciones/
+notas_internas/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# --- Herramientas y sistema ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# --- Claude Code ---
+.claude/
+CLAUDE.local.md
