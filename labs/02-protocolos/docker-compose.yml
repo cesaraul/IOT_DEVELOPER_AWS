@@ -1,0 +1,43 @@
+name: lab-protocolos
+
+services:
+  broker:
+    image: eclipse-mosquitto:2
+    container_name: lab-broker
+    ports:
+      - "1883:1883"   # MQTT sobre TCP: para los clientes Python
+      - "9001:9001"   # MQTT sobre WebSockets: para el navegador
+    volumes:
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-h", "localhost", "-t", "$$SYS/#", "-C", "1", "-W", "3"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: ./web
+    container_name: lab-web
+    ports:
+      - "8000:8000"
+    environment:
+      MQTT_HOST: broker
+      MQTT_PORT: "1883"
+    depends_on:
+      broker:
+        condition: service_healthy
+
+  simulador:
+    build: ./simulador
+    container_name: lab-simulador
+    environment:
+      MQTT_HOST: broker
+      MQTT_PORT: "1883"
+      API_URL: http://web:8000
+      DISPOSITIVO_ID: tanque-03
+      POLL_CONFIG_S: "15"      # cada cuánto pregunta por configuración vía HTTP
+    depends_on:
+      web:
+        condition: service_started
+      broker:
+        condition: service_healthy

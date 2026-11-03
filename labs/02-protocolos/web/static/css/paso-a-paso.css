@@ -1,0 +1,213 @@
+/* Estilos de la navegación por menús y de los diagramas animados.
+   Las variables de color vienen de estilo.css.
+
+   TAMAÑOS: esta interfaz se proyecta en un aula. Todo está dimensionado para
+   leerse desde la última fila, y el control "Tamaño" de la cabecera permite
+   ampliarlo todavía más sin romper la maquetación. */
+
+/* ---------------------------------------------- disposición con menú */
+
+.disposicion { display: grid; grid-template-columns: 300px 1fr; align-items: start; }
+
+.menu {
+  /* height:auto en vez de 100vh para que el control de tamaño de la cabecera
+     no deje el menú más alto que la pantalla. */
+  position: sticky; top: 0; align-self: start;
+  height: auto; max-height: 100vh; overflow-y: auto;
+  padding: 16px 12px; background: var(--papel);
+  border-right: 1px solid var(--borde);
+}
+.menu h3 {
+  margin: 16px 8px 2px; font-size: 13px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--suave);
+}
+.menu-nota { margin: 0 8px 10px; font-size: 14px; color: var(--suave); line-height: 1.4; }
+.menu-item {
+  display: flex; gap: 10px; align-items: flex-start; width: 100%;
+  padding: 10px 11px; margin-bottom: 3px;
+  border: 1px solid transparent; border-radius: 9px;
+  background: transparent; color: var(--texto);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.menu-item:hover { background: var(--fondo); }
+.menu-item.activo { background: var(--fondo); border-color: var(--borde); }
+.menu-item.activo strong { color: var(--mqtt); }
+.menu-item strong { display: block; font-size: 16px; }
+.menu-item small { display: block; color: var(--suave); font-size: 14px; line-height: 1.35; }
+.menu-icono { font-size: 17px; width: 20px; text-align: center; }
+
+/* margin:0 es imprescindible: un margen "auto" heredado anula el estirado del
+   elemento de rejilla, y <main> se quedaba en 971 px dentro de una columna de
+   1245 px, encogiendo el diagrama con él. */
+main { padding: 24px; max-width: none; margin: 0; width: 100%; }
+.vista { display: block; max-width: 1500px; }
+.vista-cabecera { margin-bottom: 18px; }
+.vista-cabecera h2 { margin: 0 0 6px; font-size: 27px; }
+
+/* ---------------------------------------------- control de tamaño */
+
+.zoom { display: flex; align-items: center; gap: 4px; }
+.zoom span { font-size: 14px; color: var(--suave); margin-right: 2px; }
+.zoom button {
+  width: 34px; height: 34px; border: 1px solid var(--borde); border-radius: 8px;
+  background: var(--papel); color: var(--texto);
+  font: 600 16px/1 inherit; cursor: pointer;
+}
+.zoom button:hover { border-color: var(--suave); }
+.zoom output { font-size: 14px; color: var(--suave); min-width: 46px; text-align: center; }
+
+/* ---------------------------------------------- selector de escenarios */
+
+.escenarios {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 9px; margin-bottom: 18px;
+}
+.escenario {
+  padding: 12px 14px; border: 1px solid var(--borde); border-radius: 10px;
+  background: var(--papel); color: var(--texto);
+  font: inherit; text-align: left; cursor: pointer;
+  transition: transform .12s, border-color .12s;
+}
+.escenario:hover { transform: translateY(-1px); border-color: var(--suave); }
+.escenario.activo { border-color: var(--mqtt); box-shadow: inset 3px 0 0 var(--mqtt); }
+.escenario strong { display: block; font-size: 16.5px; margin-bottom: 3px; }
+.escenario small { display: block; color: var(--suave); font-size: 14.5px; line-height: 1.4; }
+
+/* ---------------------------------------------- diagrama de secuencia */
+
+.diagrama {
+  background: var(--papel); border: 1px solid var(--borde);
+  border-radius: 12px; overflow: hidden; margin-bottom: 24px;
+}
+
+.diagrama-barra {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: 11px 13px; border-bottom: 1px solid var(--borde); background: var(--fondo);
+}
+.btn-principal { border-color: var(--mqtt); background: var(--mqtt-claro); color: var(--mqtt); }
+.btn:disabled { opacity: .4; cursor: default; }
+.progreso {
+  font-size: 16px; color: var(--suave); margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.velocidad { display: flex; gap: 6px; align-items: center; font-size: 16px; color: var(--suave); }
+.velocidad select {
+  padding: 6px 8px; border: 1px solid var(--borde); border-radius: 6px;
+  background: var(--papel); color: var(--texto); font: inherit;
+}
+
+.diagrama-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 380px; }
+.diagrama-lienzo { max-height: 640px; overflow-y: auto; padding: 6px; }
+.diagrama-lienzo svg { width: 100%; display: block; }
+
+.caja-actor { fill: var(--fondo); stroke: var(--borde); stroke-width: 1.5; }
+.texto-actor { fill: var(--texto); font: 700 1.05em system-ui, sans-serif; }
+.linea-vida { stroke: var(--borde); stroke-width: 2.5; stroke-dasharray: 5 6; }
+
+.paso .trazo { stroke-width: 3; fill: none; stroke-linecap: round; }
+.paso.tcp .trazo, .paso.tcp .punto { stroke: var(--c-tcp); fill: var(--c-tcp); }
+.paso.tls .trazo, .paso.tls .punto { stroke: var(--c-tls); fill: var(--c-tls); }
+.paso.app .trazo, .paso.app .punto { stroke: var(--c-app); fill: var(--c-app); }
+.paso.error .trazo, .paso.error .punto { stroke: var(--c-error); fill: var(--c-error); }
+.paso.control .trazo, .paso.control .punto { stroke: var(--c-control); fill: var(--c-control); }
+.paso .punto { stroke: none; }
+.paso.perdido .trazo { stroke-dasharray: 7 6; }
+.paso.control .trazo { stroke-dasharray: 6 5; }
+
+.relleno-tcp { fill: var(--c-tcp); }
+.relleno-tls { fill: var(--c-tls); }
+.relleno-app { fill: var(--c-app); }
+.relleno-error { fill: var(--c-error); }
+.relleno-control { fill: var(--c-control); }
+
+/* Los tamaños van en "em" sobre el font-size que el componente pone en el
+   <svg>, para que la letra se lea igual con 2 actores que con 4. */
+.texto-mensaje { fill: var(--texto); font: 600 1em var(--mono); }
+.texto-mensaje.texto-izq { text-anchor: start; font-weight: 500; }
+.texto-bytes { fill: var(--suave); font: 0.85em var(--mono); }
+.texto-utiles { fill: var(--util); }
+.texto-perdido { fill: var(--c-error); font: 700 0.85em var(--mono); }
+
+.diagrama-panel {
+  display: flex; flex-direction: column; gap: 13px;
+  padding: 16px; background: var(--fondo);
+  border-left: 1px solid var(--borde);
+}
+.contadores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.contadores > div {
+  background: var(--papel); border: 1px solid var(--borde);
+  border-radius: 9px; padding: 10px 11px;
+}
+.contadores .etiqueta { display: block; margin-bottom: 3px; font-size: 13.5px; }
+.contadores strong { display: block; font-size: 27px; font-variant-numeric: tabular-nums; }
+.contadores small { display: block; color: var(--suave); font-size: 13.5px; }
+
+.explicacion h4 {
+  margin: 0 0 8px; font: 700 18px var(--mono); line-height: 1.35;
+  display: flex; gap: 8px; align-items: center;
+}
+.explicacion p { margin: 0 0 9px; font-size: 16.5px; line-height: 1.55; }
+.explicacion .crudo { max-height: 230px; font-size: 14px; }
+
+.punto-clase { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+.punto-clase.tcp { background: var(--c-tcp); }
+.punto-clase.tls { background: var(--c-tls); }
+.punto-clase.app { background: var(--c-app); }
+.punto-clase.error { background: var(--c-error); }
+.punto-clase.control { background: var(--c-control); }
+
+.conclusion {
+  padding: 12px 14px; border-radius: 8px;
+  background: var(--mqtt-claro); border-left: 3px solid var(--mqtt);
+  font-size: 16.5px; line-height: 1.55;
+}
+.conclusion strong { display: block; margin-bottom: 5px; color: var(--mqtt); }
+.conclusion p { margin: 0; }
+
+/* ---------------------------------------------- piezas didácticas */
+
+.tono-ok { color: var(--util); }
+.tono-mal { color: var(--overhead); }
+.tabla-codigos .tono-ok td:last-child { color: var(--util); }
+.tabla-codigos .tono-mal td:last-child { color: var(--overhead); }
+.tabla-codigos .tono-aviso td:last-child { color: var(--aviso); }
+
+.topic-anatomia {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px;
+  margin: 12px 0 16px;
+}
+.nivel { display: flex; align-items: baseline; gap: 2px; }
+.nivel code { font-size: 17px; }
+.nivel small { color: var(--suave); font-size: 13px; margin-left: 4px; }
+.barra-nivel { color: var(--suave); margin: 0 5px; font-size: 18px; }
+
+.lista-notas {
+  margin: 12px 0 0; padding-left: 20px;
+  font-size: 15.5px; line-height: 1.65; color: var(--suave);
+}
+.lista-notas strong { color: var(--texto); }
+
+.texto-http { color: var(--http); }
+.texto-mqtt { color: var(--mqtt); }
+.verde { color: var(--util); }
+.rojo { color: var(--overhead); }
+
+/* ---------------------------------------------- transiciones */
+
+.desvanecer-enter-active, .desvanecer-leave-active { transition: opacity .18s, transform .18s; }
+.desvanecer-enter-from { opacity: 0; transform: translateY(5px); }
+.desvanecer-leave-to { opacity: 0; transform: translateY(-5px); }
+
+.paquete-enter-active { transition: opacity .25s, transform .25s; }
+.paquete-enter-from { opacity: 0; transform: translateX(-14px); }
+.paquete-move { transition: transform .25s; }
+
+@media (max-width: 1200px) {
+  .disposicion { grid-template-columns: 1fr; }
+  .menu {
+    position: static; height: auto;
+    border-right: none; border-bottom: 1px solid var(--borde);
+  }
+  .diagrama-cuerpo { grid-template-columns: 1fr; }
+  .diagrama-panel { border-left: none; border-top: 1px solid var(--borde); }
+}

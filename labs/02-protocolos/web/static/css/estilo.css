@@ -1,0 +1,239 @@
+/* Laboratorio de protocolos IoT.
+   Pensado para proyector de aula: tipografía grande y mucho contraste. */
+
+:root {
+  --fondo: #f6f7f9;
+  --papel: #ffffff;
+  --borde: #d9dde3;
+  --texto: #1b1f24;
+  --suave: #5c6672;
+  --http: #c2410c;
+  --http-claro: #fff1e9;
+  --mqtt: #0d6e6e;
+  --mqtt-claro: #e6f5f4;
+  --util: #15803d;
+  --overhead: #b91c1c;
+  --topic: #b45309;
+  --aviso: #92400e;
+  --mono: ui-monospace, "Cascadia Code", "Consolas", monospace;
+
+  /* Colores de las fases en los diagramas paso a paso */
+  --c-tcp: #64748b;
+  --c-tls: #7c3aed;
+  --c-app: #0284c7;
+  --c-error: #b91c1c;
+  --c-control: #b45309;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #14171b;
+    --papel: #1c2026;
+    --borde: #313841;
+    --texto: #e8ebee;
+    --suave: #9aa5b1;
+    --http: #fb923c;
+    --http-claro: #2a1d14;
+    --mqtt: #4dd4c7;
+    --mqtt-claro: #122524;
+    --util: #4ade80;
+    --overhead: #f87171;
+    --topic: #fbbf24;
+    --aviso: #fcd34d;
+
+    --c-tcp: #94a3b8;
+    --c-tls: #c4b5fd;
+    --c-app: #38bdf8;
+    --c-error: #f87171;
+    --c-control: #fbbf24;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font: 18px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* --- cabecera y navegación --- */
+
+.barra {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; flex-wrap: wrap;
+  padding: 14px 20px;
+  background: var(--papel);
+  border-bottom: 1px solid var(--borde);
+}
+.barra h1 { margin: 0; font-size: 24px; }
+.sub { margin: 2px 0 0; color: var(--suave); font-size: 16px; }
+.barra-derecha { display: flex; align-items: center; gap: 10px; }
+
+.pestanas {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  padding: 10px 20px 0;
+  background: var(--papel);
+  border-bottom: 1px solid var(--borde);
+}
+.pestana {
+  padding: 9px 14px; border: 1px solid transparent; border-bottom: none;
+  background: transparent; color: var(--suave);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  border-radius: 8px 8px 0 0;
+}
+.pestana:hover { color: var(--texto); }
+.pestana.activa {
+  background: var(--fondo); color: var(--texto);
+  border-color: var(--borde); margin-bottom: -1px;
+}
+
+main { padding: 20px; max-width: 1180px; margin: 0 auto; }
+.vista { display: none; }
+.vista.activa { display: block; }
+
+.intro { color: var(--suave); max-width: 80ch; font-size: 17px; }
+.nota { color: var(--suave); font-size: 15px; }
+
+/* --- piezas --- */
+
+.rejilla-2 {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px; margin: 16px 0;
+}
+
+.tarjeta {
+  background: var(--papel); border: 1px solid var(--borde);
+  border-radius: 12px; padding: 16px;
+}
+.tarjeta h2 { margin: 0 0 8px; font-size: 21px; display: flex; gap: 8px; align-items: baseline; }
+.tarjeta h3 { margin: 0 0 10px; font-size: 17px; }
+.tarjeta-http { border-top: 4px solid var(--http); }
+.tarjeta-mqtt { border-top: 4px solid var(--mqtt); }
+
+.etiqueta { font: 14px var(--mono); color: var(--suave); font-weight: 400; }
+
+.numeron { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
+.numeron small { font-size: 17px; font-weight: 500; color: var(--suave); }
+
+.datos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin: 12px 0; }
+.datos div { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--borde); }
+.datos dt { color: var(--suave); font-size: 15px; margin: 0; }
+.datos dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.eficiencia { font-size: 15px; color: var(--suave); }
+.barra-ef { height: 10px; background: var(--borde); border-radius: 6px; overflow: hidden; margin-bottom: 6px; }
+.barra-ef span { display: block; height: 100%; background: var(--util); transition: width .4s; }
+
+.veredicto {
+  background: var(--papel); border: 1px solid var(--borde); border-left: 4px solid var(--util);
+  border-radius: 10px; padding: 14px 16px; font-size: 17px;
+}
+
+/* --- controles --- */
+
+.controles {
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  margin: 14px 0; padding: 12px; background: var(--papel);
+  border: 1px solid var(--borde); border-radius: 10px;
+}
+.controles .derecha { margin-left: auto; }
+label { font-size: 16px; }
+input[type="number"], input[type="text"] {
+  padding: 6px 8px; border: 1px solid var(--borde); border-radius: 6px;
+  background: var(--fondo); color: var(--texto); font: inherit;
+}
+
+.btn {
+  padding: 8px 14px; border: 1px solid var(--borde); border-radius: 8px;
+  background: var(--papel); color: var(--texto);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.btn:hover { border-color: var(--suave); }
+.btn-http { border-color: var(--http); color: var(--http); }
+.btn-mqtt { border-color: var(--mqtt); color: var(--mqtt); }
+
+.pastilla { padding: 5px 11px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+.pastilla-gris { background: var(--borde); color: var(--suave); }
+.pastilla-ok { background: var(--mqtt-claro); color: var(--mqtt); }
+.pastilla-mal { background: var(--http-claro); color: var(--overhead); }
+
+.control-rango { display: grid; grid-template-columns: 1fr 160px 60px; align-items: center; gap: 8px; margin-bottom: 10px; }
+.interruptor { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
+
+/* --- inspector --- */
+
+.lista-paquetes { display: flex; flex-direction: column; gap: 8px; }
+
+.paquete {
+  background: var(--papel); border: 1px solid var(--borde);
+  border-left: 4px solid var(--suave); border-radius: 8px; padding: 10px 12px;
+}
+.paquete.http { border-left-color: var(--http); }
+.paquete.mqtt { border-left-color: var(--mqtt); }
+.paquete.error { background: var(--http-claro); }
+
+.paquete-cabeza {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  cursor: pointer; font: 15px var(--mono);
+}
+.paquete-cabeza b { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; }
+.paquete-cabeza .crece { flex: 1; color: var(--suave); }
+.paquete-cuerpo { display: none; margin-top: 10px; }
+.paquete.abierto .paquete-cuerpo { display: block; }
+
+.crudo {
+  font: 14px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all;
+  background: var(--fondo); border: 1px solid var(--borde); border-radius: 6px;
+  padding: 10px; margin: 0 0 10px; max-height: 260px; overflow: auto;
+}
+
+.desglose { display: flex; height: 30px; border-radius: 6px; overflow: hidden; }
+.desglose span {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: #fff; min-width: 2px; white-space: nowrap;
+}
+.desglose .overhead { background: var(--overhead); }
+.desglose .topic { background: var(--topic); }
+.desglose .util { background: var(--util); }
+.leyenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; color: var(--suave); margin-top: 6px; }
+
+.chip { padding: 1px 7px; border-radius: 4px; color: #fff; font-size: 14px; }
+.chip-overhead { background: var(--overhead); }
+.chip-topic { background: var(--topic); }
+.chip-util { background: var(--util); }
+
+/* --- consolas, tablas, listas --- */
+
+.consola {
+  font: 14.5px/1.6 var(--mono); background: var(--papel);
+  border: 1px solid var(--borde); border-radius: 8px;
+  padding: 10px; height: 260px; overflow: auto;
+}
+.consola-alta { height: 340px; }
+.consola div { padding: 1px 0; border-bottom: 1px dotted var(--borde); }
+.consola .ok { color: var(--util); }
+.consola .error { color: var(--overhead); }
+.consola .aviso { color: var(--aviso); }
+
+.tabla { width: 100%; border-collapse: collapse; background: var(--papel); border: 1px solid var(--borde); border-radius: 8px; }
+.tabla th, .tabla td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--borde); font-size: 16px; }
+.tabla th { color: var(--suave); font-size: 14px; text-transform: uppercase; letter-spacing: .04em; }
+
+.lista-topics { list-style: none; margin: 0; padding: 0; font: 15px var(--mono); }
+.lista-topics li {
+  padding: 6px 8px; border-bottom: 1px solid var(--borde);
+  display: flex; justify-content: space-between; gap: 10px;
+}
+.lista-topics li.coincide { background: var(--mqtt-claro); font-weight: 700; }
+.lista-topics .cuenta { color: var(--suave); font-weight: 400; }
+
+.crono { background: var(--papel); border: 1px solid var(--borde); border-radius: 12px; padding: 16px; }
+.crono-http { border-top: 4px solid var(--http); }
+.crono-mqtt { border-top: 4px solid var(--mqtt); }
+
+@media (max-width: 720px) {
+  .control-rango { grid-template-columns: 1fr; }
+  .numeron { font-size: 30px; }
+}

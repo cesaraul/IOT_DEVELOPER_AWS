@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio de Protocolos IoT</title>
+<link rel="stylesheet" href="/static/css/estilo.css">
+<link rel="stylesheet" href="/static/css/paso-a-paso.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="barra">
+    <div>
+      <h1>Laboratorio de Protocolos IoT</h1>
+      <p class="sub">{{ subtitulo }}</p>
+    </div>
+    <div class="barra-derecha">
+      <div class="zoom" title="Ajusta el tamaño de toda la interfaz (útil en proyector)">
+        <span>Tamaño</span>
+        <button @click="ajustarTamano(-10)">−</button>
+        <output>{{ tamano }} %</output>
+        <button @click="ajustarTamano(10)">+</button>
+      </div>
+      <span class="pastilla" :class="claseConexion">{{ textoConexion }}</span>
+      <button class="btn btn-secundario" @click="reiniciarContadores">Reiniciar contadores</button>
+    </div>
+  </header>
+
+  <div class="disposicion">
+
+    <aside class="menu">
+      <template v-for="grupo in menu" :key="grupo.titulo">
+        <h3>{{ grupo.titulo }}</h3>
+        <p class="menu-nota">{{ grupo.nota }}</p>
+        <button
+          v-for="item in grupo.items"
+          :key="item.id"
+          class="menu-item"
+          :class="{ activo: vista === item.id }"
+          @click="vista = item.id">
+          <span class="menu-icono">{{ item.icono }}</span>
+          <span>
+            <strong>{{ item.titulo }}</strong>
+            <small>{{ item.resumen }}</small>
+          </span>
+        </button>
+      </template>
+    </aside>
+
+    <main>
+      <transition name="desvanecer" mode="out-in">
+        <component :is="'vista-' + vista" :key="vista"></component>
+      </transition>
+    </main>
+
+  </div>
+</div>
+
+<script src="/static/vendor/vue.global.prod.js"></script>
+<script src="/static/vendor/gsap.min.js"></script>
+<script src="/static/vendor/mqtt.min.js"></script>
+
+<script src="/static/js/tienda.js"></script>
+<script src="/static/js/guiones.js"></script>
+<script src="/static/js/componentes/diagrama-secuencia.js"></script>
+<script src="/static/js/componentes/vista-http-pasos.js"></script>
+<script src="/static/js/componentes/vista-mqtt-pasos.js"></script>
+<script src="/static/js/componentes/vista-comparador.js"></script>
+<script src="/static/js/componentes/vista-inspector.js"></script>
+<script src="/static/js/componentes/vista-comandos.js"></script>
+<script src="/static/js/componentes/vista-topics.js"></script>
+<script src="/static/js/componentes/vista-fallos.js"></script>
+<script src="/static/js/componentes/vista-qos.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
