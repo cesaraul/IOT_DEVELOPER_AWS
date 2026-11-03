@@ -105,9 +105,15 @@ Dispositivo IoT  ──►  AWS IoT Core  ──►  Rules Engine + Lambda
 
 ## Requisitos previos a la primera sesión
 
+- **Docker Desktop instalado y probado** → sigue la
+  [guía de instalación paso a paso](docs/instalar-docker.md). Es la que usan
+  los laboratorios; dedícale 20 minutos **antes** de la primera clase.
 - Cuenta de AWS activa (el curso se trabaja dentro del **Free Tier**).
 - Python 3.8 o superior instalado.
 - Git y un editor de código (se recomienda VS Code).
+
+No hace falta tener experiencia con Docker: la guía explica cada comando y
+trae una sección de problemas frecuentes con su solución.
 
 > **Importante — costos y seguridad:** los laboratorios usan servicios que
 > pueden generar cargos si quedan activos. Al final de cada día se indica qué
@@ -120,9 +126,18 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 
 ```
 .
-├── README.md          Este archivo
-└── ...                Material y labs por sesión (en construcción)
+├── README.md                    Este archivo
+├── docs/
+│   └── instalar-docker.md       Prepara tu computadora (empieza aquí)
+└── labs/
+    └── 02-protocolos/           Laboratorio de HTTP y MQTT
 ```
+
+### Laboratorios disponibles
+
+| Laboratorio | Qué practicas |
+|---|---|
+| [02 · Protocolos IoT](labs/02-protocolos/) | HTTP y MQTT paso a paso, y un banco de pruebas en vivo con broker real |
 
 ---
 

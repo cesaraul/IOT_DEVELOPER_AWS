@@ -11,9 +11,18 @@ Todo corre en tu máquina. **No necesitas cuenta de AWS ni conexión a internet*
 
 ## Arrancar
 
+> **¿Primera vez con Docker?** Empieza por la
+> [guía de instalación paso a paso](../../docs/instalar-docker.md): instala
+> Docker, comprueba que funciona y levanta este laboratorio, con las soluciones
+> a los errores más comunes. Vuelve aquí cuando lo tengas corriendo.
+
+Dentro de esta carpeta (`labs/02-protocolos`):
+
 ```bash
 docker compose up --build
 ```
+
+La primera vez tarda entre 2 y 5 minutos porque descarga las imágenes.
 
 Cuando termine, abre **<http://localhost:8000>**.
 
