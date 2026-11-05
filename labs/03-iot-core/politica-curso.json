@@ -1,0 +1,26 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ConectarseSoloConSuPropioNombre",
+      "Effect": "Allow",
+      "Action": "iot:Connect",
+      "Resource": "arn:aws:iot:REGION:CUENTA:client/${iot:Connection.Thing.ThingName}"
+    },
+    {
+      "Sid": "PublicarEnLosTopicsDelCurso",
+      "Effect": "Allow",
+      "Action": [
+        "iot:Publish",
+        "iot:Receive"
+      ],
+      "Resource": "arn:aws:iot:REGION:CUENTA:topic/fablab/planta1/*"
+    },
+    {
+      "Sid": "SuscribirseALosTopicsDelCurso",
+      "Effect": "Allow",
+      "Action": "iot:Subscribe",
+      "Resource": "arn:aws:iot:REGION:CUENTA:topicfilter/fablab/planta1/*"
+    }
+  ]
+}

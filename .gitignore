@@ -6,10 +6,16 @@
 *.pfx
 certs/
 certificates/
-# Todo lo que caiga en certificados/ queda fuera, menos la nota que explica
-# qué va ahí (git no entra en una carpeta excluida entera, por eso el /*).
-certificados/*
-!certificados/LEEME.txt
+# Todo lo que caiga en una carpeta certificados/ queda fuera, menos la nota
+# que explica qué va ahí. El ** es imprescindible: un patrón con barra se
+# ancla a la raíz del repositorio, y estas carpetas cuelgan de labs/.
+**/certificados/*
+!**/certificados/LEEME.txt
+
+# Excepción deliberada: el certificado raíz de Amazon es PÚBLICO (va dentro
+# de cualquier SDK) y el laboratorio lo necesita. Sin esto, *.pem lo excluye
+# y el alumno se queda a medias.
+!labs/03-iot-core/AmazonRootCA1.pem
 .env
 .env.*
 !.env.example

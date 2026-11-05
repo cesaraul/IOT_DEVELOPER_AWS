@@ -46,7 +46,14 @@ def llave_privada() -> str | None:
 
 
 def raiz_amazon() -> str | None:
-    return _buscar(["*AmazonRootCA1*", "*root*CA*.pem", "*RootCA*"])
+    # El kit de conexión de AWS NO incluye el certificado raíz: su script lo
+    # descarga aparte. Para que nadie se quede atascado por eso, el
+    # laboratorio ya lo trae (es un certificado público, el mismo para todos).
+    propia = _buscar(["*AmazonRootCA1*", "*root*CA*", "*RootCA*"])
+    if propia:
+        return propia
+    incluida = os.path.join(os.path.dirname(os.path.abspath(__file__)), "AmazonRootCA1.pem")
+    return incluida if os.path.exists(incluida) else None
 
 
 def identidad() -> tuple[str, str, str] | None:

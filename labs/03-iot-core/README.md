@@ -13,9 +13,12 @@ instalar Python**: Docker se encarga.
 
 - **Docker Desktop** corriendo (lo usaste en el laboratorio 02).
 - **Cuenta de AWS** activa.
-- **La región en `N. Virginia (us-east-1)`**, arriba a la derecha de la
-  consola. Si creas tu dispositivo en otra región, no lo vas a encontrar
-  después. Es el error número uno.
+- **Saber en qué región estás.** Las cuentas nuevas abren la consola en una
+  región fija —suele ser `Ohio (us-east-2)`— y **no muestran selector de
+  región**. No intentes cambiarla: usa la que te toque, **anótala**, y
+  asegúrate de que todo lo que crees esté en esa misma. La región va dentro
+  de tu endpoint, así que si algún día «desaparecen» tus cosas, es que estás
+  mirando otra.
 
 ---
 
@@ -101,7 +104,35 @@ te dice **exactamente** qué falta en cada caso.
 
 **No sigas hasta que todo salga en verde.**
 
-## Paso 5 · Publicar, y verlo llegar
+## Paso 5 · Darle permisos a tu dispositivo
+
+La primera vez, el comprobador va a fallar en el paso 5 con un mensaje como
+*«AWS aceptó el cifrado pero cortó la conexión sin responder»*. **No es un
+error tuyo.**
+
+La política que crea el asistente solo autoriza los topics de su propio
+ejemplo (`sdk/test/...`) y unos nombres de cliente fijos. Con tu dispositivo y
+tus topics, AWS rechaza la conexión — y, como verás, **no dice por qué**:
+simplemente cuelga. Reconocer ese silencio es media clase de seguridad en IoT.
+
+Para arreglarlo:
+
+1. Consola → **Security** → **Policies** → tu política → **Edit** (o *Editar
+   versión activa*).
+2. Cambia el editor de **Creador** a **JSON**.
+3. Borra lo que hay y pega el contenido de **`politica-curso.json`**, que está
+   en esta carpeta, sustituyendo `REGION` por la tuya y `CUENTA` por el número
+   de tu cuenta (lo ves en el ARN que muestra la misma pantalla).
+4. Marca **«establecer como versión activa»** antes de guardar, o la versión
+   nueva no se aplica a nada.
+5. Vuelve a ejecutar el comprobador. Ahora sí: todo en verde.
+
+Esa política dice exactamente tres cosas: que este certificado puede
+conectarse **con el nombre de su propio objeto**, y publicar y suscribirse
+**solo en `fablab/planta1/…`**. Eso es el mínimo privilegio: si alguien robara
+el certificado, no podría tocar los topics de los demás.
+
+## Paso 6 · Publicar, y verlo llegar
 
 Abre dos cosas a la vez.
 
@@ -120,7 +151,7 @@ pantalla. **Ya tienes un dispositivo en la nube.**
 
 Para detenerlo: `Ctrl + C`.
 
-## Paso 6 · Recibir un comando
+## Paso 7 · Recibir un comando
 
 Ahora al revés. En la terminal:
 

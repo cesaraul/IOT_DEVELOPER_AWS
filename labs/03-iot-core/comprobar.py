@@ -144,13 +144,18 @@ if config.ENDPOINT and resuelve:
 if config.ENDPOINT and cert and llave and raiz and fallos == 0:
     titulo("5. ¿Te reconoce AWS?")
 
-    resultado = {"codigo": None}
+    resultado = {"codigo": None, "cerrada": False}
 
     def al_conectar(cliente, userdata, flags, codigo, propiedades=None):
         resultado["codigo"] = codigo
 
+    def al_desconectar(cliente, userdata, flags, codigo, propiedades=None):
+        # AWS no dice "permiso denegado": simplemente cierra la conexión.
+        resultado["cerrada"] = True
+
     cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=config.ID)
     cliente.on_connect = al_conectar
+    cliente.on_disconnect = al_desconectar
 
     try:
         cliente.tls_set(
@@ -169,8 +174,14 @@ if config.ENDPOINT and cert and llave and raiz and fallos == 0:
 
         if resultado["codigo"] is None:
             mal(
-                "AWS no respondió a tiempo",
-                "Vuelve a intentarlo. Si se repite, revisa tu conexión a internet.",
+                "AWS aceptó el cifrado pero cortó la conexión sin responder",
+                f"""Esto es casi siempre LA POLÍTICA. AWS nunca dice "permiso
+                   denegado": simplemente cuelga.
+                   La política que crea el asistente solo deja conectarse con
+                   los client-id de su propio ejemplo, no con '{config.ID}'.
+                   Arréglalo así: consola -> Security -> Policies -> tu
+                   política -> Edit, y pega el contenido de politica-curso.json
+                   que está en esta carpeta (cambiando REGION y CUENTA).""",
             )
         elif str(resultado["codigo"]) in ("Success", "0"):
             bien(f"conectado como '{config.ID}'")
