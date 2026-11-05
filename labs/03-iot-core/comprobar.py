@@ -103,10 +103,13 @@ else:
 
 # --- 3. Resolución de nombre ---------------------------------------------
 
+resuelve = False
+
 if config.ENDPOINT:
     titulo("3. ¿Existe esa dirección?")
     try:
         ip = socket.gethostbyname(config.ENDPOINT)
+        resuelve = True
         bien(f"el nombre resuelve a {ip}")
     except socket.gaierror:
         mal(
@@ -117,7 +120,9 @@ if config.ENDPOINT:
 
 # --- 4. El puerto 8883 ----------------------------------------------------
 
-if config.ENDPOINT:
+# Solo tiene sentido si el nombre existe: si no, el fallo sería del endpoint,
+# no de la red, y mandaríamos al alumno a revisar el cortafuegos sin motivo.
+if config.ENDPOINT and resuelve:
     titulo("4. ¿Deja pasar tu red el puerto 8883?")
     conector = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     conector.settimeout(8)
