@@ -1,0 +1,20 @@
+name: lab-iot-core
+
+services:
+  # Todo lo necesario para hablar con AWS IoT Core, ya instalado.
+  # No necesitas Python en tu computadora.
+  #
+  #   docker compose run --rm aws python comprobar.py
+  #   docker compose run --rm aws python publicar.py
+  #   docker compose run --rm aws python suscribir.py
+  aws:
+    build: .
+    environment:
+      # Se leen del archivo .env que creaste a partir de .env.example
+      AWS_IOT_ENDPOINT: ${AWS_IOT_ENDPOINT:-}
+      DISPOSITIVO_ID: ${DISPOSITIVO_ID:-mi-dispositivo}
+    volumes:
+      # Tus certificados, en solo lectura: el contenedor no puede modificarlos.
+      - ./certificados:/certificados:ro
+      # El código, para que puedas editarlo y volver a ejecutar sin reconstruir.
+      - ./:/srv

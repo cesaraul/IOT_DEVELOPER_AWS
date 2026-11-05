@@ -1,0 +1,12 @@
+Aquí van los archivos del connection kit que descargaste de AWS.
+
+Debes terminar con tres:
+
+    xxxxx-certificate.pem.crt    tu certificado
+    xxxxx-private.pem.key        tu llave privada  <-- NO LA COMPARTAS
+    AmazonRootCA1.pem            el certificado raíz de Amazon
+
+Nada de esta carpeta se sube al repositorio: está excluida a propósito.
+
+Si no tienes la llave privada, no se puede recuperar. Crea un certificado
+nuevo en la consola y adjúntalo al mismo Thing.

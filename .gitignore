@@ -6,6 +6,10 @@
 *.pfx
 certs/
 certificates/
+# Todo lo que caiga en certificados/ queda fuera, menos la nota que explica
+# qué va ahí (git no entra en una carpeta excluida entera, por eso el /*).
+certificados/*
+!certificados/LEEME.txt
 .env
 .env.*
 !.env.example
