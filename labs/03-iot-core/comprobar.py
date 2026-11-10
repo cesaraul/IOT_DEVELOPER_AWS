@@ -1,11 +1,29 @@
 """Diagnóstico: ¿está todo listo para hablar con AWS IoT Core?
 
-Revisa, en orden, las seis cosas que pueden fallar, y dice en castellano qué
-hacer con cada una. Ejecútalo antes que nada:
-
+CÓMO SE EJECUTA
     docker compose run --rm aws python comprobar.py
 
-Si todo sale en verde, publicar.py va a funcionar.
+    Si todo sale en verde, publicar.py va a funcionar. No sigas sin eso.
+
+QUÉ COMPRUEBA, Y POR QUÉ EN ESE ORDEN
+    Las comprobaciones van de lo más cercano a lo más lejano, para que el
+    primer fallo sea siempre el verdadero y no un síntoma:
+
+    1. Los tres archivos    están donde deben y son los que parecen
+    2. El endpoint          lo escribiste, y tiene la forma correcta
+    3. ¿Existe?             el nombre resuelve a una dirección real
+    4. El puerto 8883       tu red lo deja salir (en empresas suele estar
+                            cerrado, y ese fallo no se parece a ningún otro)
+    5. ¿Te reconoce AWS?    el saludo TLS funciona y te acepta la conexión
+    6. ¿Te deja publicar?   tu política autoriza el topic que vas a usar
+
+    Si 3 falla, 4 no se ejecuta: con un nombre inventado, el puerto fallaría
+    también y te mandaría a revisar el cortafuegos sin motivo.
+
+POR QUÉ EXISTE ESTE ARCHIVO
+    Porque los errores de AWS en esta parte son mudos. Cuando la política no
+    te autoriza, no recibes un "permiso denegado": la conexión se corta y ya.
+    Este script traduce cada silencio a una frase y a una acción concreta.
 """
 
 import socket
