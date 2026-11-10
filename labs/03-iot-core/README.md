@@ -22,6 +22,46 @@ instalar Python**: Docker se encarga.
 
 ---
 
+## Paso 0 · Protege tu cuenta antes de crear nada
+
+Dos minutos que te ahorran disgustos. Hazlos **antes** de seguir.
+
+### Tu alerta de gasto
+
+Las cuentas nuevas traen créditos que **expiran a los seis meses**, y nada
+avisa si algo se queda encendido consumiéndolos.
+
+1. Buscador → **Administración de facturación y costos** → **Presupuestos**.
+2. **Crear presupuestos** → plantilla **«Presupuesto de gasto cero»**.
+3. Ponle un nombre (`alerta-de-gasto`) y **tu correo**. Crear.
+
+Te avisará en cuanto el gasto supere **0,01 USD**. No corta nada —AWS no tiene
+un botón de «no gastes más de X»— pero te enteras el mismo día en vez de a fin
+de mes.
+
+> Verás que la dirección cambia a `us-east-1` aunque tu consola esté en otra
+> región: la facturación es un servicio global. Es normal.
+
+### No trabajes con la cuenta raíz
+
+La cuenta con la que te registraste —la **raíz**— lo puede todo: borrar la
+cuenta, cambiar la tarjeta, cerrar servicios. Está atada a tu medio de pago.
+La buena práctica, en cualquier nube, es la misma: **identidades separadas y
+permisos mínimos**, y la raíz reservada para lo imprescindible.
+
+Lo mínimo que debes hacer hoy: **activa MFA en la cuenta raíz**
+(tu nombre → *Security credentials*).
+
+Y una advertencia, porque los tutoriales viejos dicen otra cosa: si entras a
+**IAM → Usuarios**, la propia consola te avisa de que **los usuarios de IAM
+son solo para acceso programático**, y que a las personas se las invita desde
+la página del equipo. Al crear uno verás *«Tipo de contraseña de consola:
+None»*: no puede entrar a la consola.
+
+> Guárdate esta idea, porque es la misma que usarás en este laboratorio:
+> **un usuario de IAM es a un programa lo que el certificado X.509 es a tu
+> dispositivo.** Identidades de máquina, no de persona.
+
 ## Paso 1 · Crear tu dispositivo en AWS
 
 1. En el buscador de la consola, escribe **IoT Core** y entra.
