@@ -1,0 +1,39 @@
+name: lab-device-shadow
+
+# Dos servicios, porque hay dos actores distintos. No es un capricho de
+# organización: fíjate en lo que recibe cada uno.
+
+services:
+  # EL DISPOSITIVO. Entra a AWS con su certificado, por MQTT.
+  #
+  #   docker compose run --rm dispositivo python comprobar.py
+  #   docker compose run --rm dispositivo python shadow_dispositivo.py
+  dispositivo:
+    build: .
+    env_file:
+      # El endpoint y el nombre del objeto los reutilizamos del laboratorio
+      # 03: ya los escribiste una vez y un dato copiado dos veces es un dato
+      # que algún día va a discrepar consigo mismo.
+      - ../03-iot-core/.env
+      - .env
+    volumes:
+      # Sus certificados, en solo lectura.
+      - ../03-iot-core/certificados:/certificados:ro
+      - ./:/srv
+
+  # LA APLICACIÓN. Entra a AWS con las claves de un usuario de IAM, por HTTPS.
+  #
+  #   docker compose run --rm app python shadow_app.py ver
+  #   docker compose run --rm app python shadow_app.py encender
+  app:
+    build: .
+    env_file:
+      - ../03-iot-core/.env
+      - .env
+    volumes:
+      # Fíjate en lo que NO está aquí: la carpeta de certificados.
+      #
+      # La aplicación no los tiene, no los necesita y no debe tenerlos. Si
+      # alguna vez te preguntas por qué separamos los dos servicios en vez
+      # de usar uno solo, esta línea que falta es la respuesta.
+      - ./:/srv

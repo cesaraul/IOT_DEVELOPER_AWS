@@ -16,6 +16,17 @@ certificates/
 # de cualquier SDK) y el laboratorio lo necesita. Sin esto, *.pem lo excluye
 # y el alumno se queda a medias.
 !labs/03-iot-core/AmazonRootCA1.pem
+!labs/04-device-shadow/AmazonRootCA1.pem
+
+# Las políticas que genera cada alumno llevan SU número de cuenta dentro.
+# No es un secreto crítico, pero es un dato de su cuenta y no tiene por qué
+# acabar en el repositorio del curso. Las plantillas (politica-*.json) sí se
+# suben: son las que llevan REGION y CUENTA sin rellenar.
+**/mi-politica*.json
+
+# El sketch del ESP32 necesita los certificados compilados dentro. Van en un
+# secretos.h generado en local, nunca en el .ino, que sí se publica.
+**/secretos.h
 .env
 .env.*
 !.env.example
@@ -23,6 +34,9 @@ credentials
 aws_credentials*
 *.secret
 *_secret*
+# Excepción: el script que GENERA el secretos.h sí se publica. No contiene
+# ningún secreto: los lee de la carpeta certificados del propio alumno.
+!**/generar_secretos.py
 
 # --- Material interno del curso (vive fuera de este repo) ---
 _privado/

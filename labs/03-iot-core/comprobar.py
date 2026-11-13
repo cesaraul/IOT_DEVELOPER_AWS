@@ -26,6 +26,7 @@ POR QUÉ EXISTE ESTE ARCHIVO
     Este script traduce cada silencio a una frase y a una acción concreta.
 """
 
+import os
 import socket
 import ssl
 import sys
@@ -95,6 +96,28 @@ else:
            https://www.amazontrust.com/repository/AmazonRootCA1.pem
            y guárdalo en la carpeta 'certificados'.""",
     )
+
+# ¿El certificado que vamos a presentar es el del dispositivo que dice .env?
+#
+# Esta comprobación existe porque el fallo que evita es de los peores: si
+# creaste varios objetos en la consola y solo descomprimiste el kit de uno,
+# los scripts usan el certificado que encuentran pero se anuncian con el
+# nombre del .env. AWS ve a alguien que presenta el carnet de Juan diciendo
+# llamarse Pedro, y cuelga sin dar explicaciones. Sin esta comprobación el
+# error aparece recién en el paso 5 y parece un problema de permisos.
+
+if cert:
+    duenio = os.path.basename(cert).split(".")[0].replace("-certificate", "")
+    if not os.path.basename(cert).startswith(config.ID):
+        mal(
+            f"el certificado es de '{duenio}', pero DISPOSITIVO_ID dice '{config.ID}'",
+            f"""Son dos objetos distintos. Presentarias el certificado de uno
+               anunciandote como el otro, y AWS corta la conexion sin avisar.
+               Elige una de las dos salidas:
+               - descomprime el kit de '{config.ID}' dentro de la carpeta
+                 'certificados' (deben quedar ahi su .cert.pem y su .private.key)
+               - o edita el archivo .env y pon  DISPOSITIVO_ID={duenio}""",
+        )
 
 # --- 2. El endpoint -------------------------------------------------------
 

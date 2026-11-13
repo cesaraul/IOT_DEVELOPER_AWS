@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "LeerYEscribirSoloElShadowDeMiObjeto",
+      "Effect": "Allow",
+      "Action": [
+        "iot:GetThingShadow",
+        "iot:UpdateThingShadow"
+      ],
+      "Resource": "arn:aws:iot:REGION:CUENTA:thing/MI-OBJETO"
+    },
+    {
+      "Sid": "AveriguarElEndpointDeMiCuenta",
+      "Effect": "Allow",
+      "Action": "iot:DescribeEndpoint",
+      "Resource": "*"
+    }
+  ]
+}

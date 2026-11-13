@@ -264,8 +264,29 @@ escribir en el topic de ese dispositivo, no en los de toda la flota.
 
 ## Reto opcional: el mismo dispositivo, en un ESP32
 
-En `esp32/aws_iot_esp32/` tienes el sketch. Es el de la clase 2 con los
-certificados pegados dentro y el puerto 8883.
+En `esp32/aws_iot_esp32/` tienes el sketch. Es el de la clase 2 con el puerto
+8883 y tus certificados compilados dentro del programa — porque el ESP32 no
+tiene dónde guardar archivos sueltos.
+
+Eso crea un problema que no teníamos en Python: **si pegas la llave privada
+en el `.ino`, la llave viaja con el código**. Y los `.ino` se comparten por
+correo, por USB y por repositorio. Así que van en un archivo aparte, que se
+genera solo:
+
+```bash
+docker compose run --rm aws python generar_secretos.py
+```
+
+Lee tu carpeta `certificados` y escribe `esp32/aws_iot_esp32/secretos.h` con
+los tres certificados ya formateados. Abre el sketch en el IDE de Arduino:
+`secretos.h` aparece como una pestaña al lado del `.ino`, y lo único que
+escribes a mano es tu WiFi.
+
+| Archivo | Qué lleva | ¿Se sube al repositorio? |
+|---|---|---|
+| `aws_iot_esp32.ino` | el programa | **sí** |
+| `secretos.h` | tu WiFi, tu endpoint, tus certificados | **no** (está en el `.gitignore`) |
+| `secretos.h.ejemplo` | la plantilla, con huecos | sí |
 
 Trae una trampa que vale la pena conocer: el ESP32 **necesita saber la fecha**.
 Un certificado tiene periodo de validez, así que si el reloj del chip está en

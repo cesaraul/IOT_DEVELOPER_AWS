@@ -1,0 +1,6 @@
+# El dispositivo habla MQTT.
+paho-mqtt==2.1.0
+
+# La aplicación habla con la API de AWS. Es el SDK oficial de Python, el
+# mismo que usarías en un backend de verdad o dentro de una Lambda.
+boto3>=1.34,<2

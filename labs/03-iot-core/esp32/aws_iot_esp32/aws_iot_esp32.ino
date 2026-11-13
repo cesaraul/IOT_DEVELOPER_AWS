@@ -15,7 +15,27 @@
  *   - PubSubClient, de Nick O'Leary
  * Placa: "ESP32 Dev Module".
  *
- * Antes de subirlo, rellena las secciones 1, 2 y 3.
+ * ---------------------------------------------------------------------
+ * DÓNDE ESTÁN TUS DATOS: en secretos.h, no aquí
+ * ---------------------------------------------------------------------
+ * En este archivo no hay nada tuyo: ni tu WiFi, ni tu endpoint, ni tus
+ * certificados. Todo eso vive en secretos.h, que generas tú en un segundo
+ * desde la carpeta labs/03-iot-core:
+ *
+ *     docker compose run --rm aws python generar_secretos.py
+ *
+ * El script lee tu carpeta 'certificados' y escribe secretos.h con los tres
+ * certificados ya formateados. Luego abres el sketch en el IDE de Arduino:
+ * secretos.h aparece como una pestaña al lado de esta, y lo único que
+ * tienes que escribir a mano es tu WiFi.
+ *
+ * ¿Por qué separado? Porque este .ino se publica y tu llave privada no se
+ * publica nunca. Un .ino con una llave dentro es un accidente esperando a
+ * pasar: se manda por correo, se sube a un repositorio, se deja en un USB.
+ * Separar el código de los secretos cuesta un archivo, y te ahorra tener
+ * que revocar un certificado y volver a empezar.
+ *
+ * secretos.h está en el .gitignore. Este archivo no.
  */
 
 #include <WiFi.h>
@@ -23,45 +43,18 @@
 #include <PubSubClient.h>
 #include <time.h>
 
-// ======================================================= 1. TU RED WIFI
+#include "secretos.h"
 
-const char* WIFI_SSID     = "NOMBRE_DE_TU_WIFI";
-const char* WIFI_PASSWORD = "CLAVE_DE_TU_WIFI";
-
-// ======================================================= 2. TU CUENTA AWS
-
-// Consola de IoT Core -> Settings -> "Device data endpoint"
-const char* AWS_ENDPOINT = "xxxxxxxxxxxxxx-ats.iot.us-east-1.amazonaws.com";
-
-// El nombre de tu Thing. Debe coincidir con el de la consola.
-const char* ID = "mi-dispositivo";
-
-// ======================================================= 3. TUS CERTIFICADOS
-//
-// Abre cada archivo del connection kit con el Bloc de notas y pega su
-// contenido COMPLETO entre las comillas, incluidas las líneas
-// -----BEGIN ... ----- y -----END ... -----.
-
-// AmazonRootCA1.pem
-static const char AWS_ROOT_CA[] PROGMEM = R"EOF(
------BEGIN CERTIFICATE-----
-PEGA AQUI EL CONTENIDO DE AmazonRootCA1.pem
------END CERTIFICATE-----
-)EOF";
-
-// xxxxx-certificate.pem.crt
-static const char CERTIFICADO[] PROGMEM = R"KEY(
------BEGIN CERTIFICATE-----
-PEGA AQUI EL CONTENIDO DE TU ARCHIVO -certificate.pem.crt
------END CERTIFICATE-----
-)KEY";
-
-// xxxxx-private.pem.key
-static const char LLAVE_PRIVADA[] PROGMEM = R"KEY(
------BEGIN RSA PRIVATE KEY-----
-PEGA AQUI EL CONTENIDO DE TU ARCHIVO -private.pem.key
------END RSA PRIVATE KEY-----
-)KEY";
+// Nombres cortos para lo que viene de secretos.h, para que el resto del
+// programa se lea exactamente igual que el de la clase 2. Si comparas los
+// dos sketches, verás que de aquí abajo casi no cambia nada.
+#define WIFI_SSID      SECRETO_WIFI_SSID
+#define WIFI_PASSWORD  SECRETO_WIFI_PASSWORD
+#define AWS_ENDPOINT   SECRETO_AWS_ENDPOINT
+#define ID             SECRETO_DISPOSITIVO_ID
+#define AWS_ROOT_CA    SECRETO_ROOT_CA
+#define CERTIFICADO    SECRETO_CERTIFICADO
+#define LLAVE_PRIVADA  SECRETO_LLAVE_PRIVADA
 
 // ---------------------------------------------------------------- internos
 
