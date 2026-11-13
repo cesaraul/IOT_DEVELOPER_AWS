@@ -346,11 +346,58 @@ cualquier credencial que no estés usando.
 
 ## Reto opcional: el mismo ciclo en un ESP32
 
-Mismo shadow, misma política, pero el que obedece es la placa: un LED que se
-enciende desde la consola de AWS **aunque la placa estuviera apagada cuando
-diste la orden**.
+Mismo shadow, misma política, mismo certificado — pero el que obedece es la
+placa, y la bomba es **el LED**. Lo enciendes desde la consola de AWS, aunque
+la placa estuviera desenchufada cuando diste la orden.
 
-Está en `esp32/`. Es la continuación del reto del laboratorio 03.
+Está en [`esp32/aws_shadow_esp32/`](esp32/aws_shadow_esp32/).
+
+### Preparar
+
+```bash
+docker compose run --rm dispositivo python generar_secretos.py
+```
+
+Crea `esp32/aws_shadow_esp32/secretos.h` con tus tres certificados ya
+formateados. Ábrelo en el IDE de Arduino —aparece como una pestaña al lado
+del sketch— y escribe tu WiFi. Ese archivo está en el `.gitignore`; el `.ino`
+no lleva nada tuyo.
+
+Librerías que hay que instalar desde el Gestor de librerías:
+
+- **PubSubClient**, de Nick O'Leary
+- **ArduinoJson**, de Benoit Blanchon (versión 7)
+
+> **Apaga `shadow_dispositivo.py` antes de encender la placa.** Los dos se
+> identifican con el mismo nombre de objeto y AWS expulsa a uno de los dos,
+> una y otra vez. Si ves la placa reconectándose en bucle, es esto.
+
+### Las dos trampas de hacerlo en un micro
+
+Ninguna da un error: las dos fallan en silencio, y por eso están comentadas
+en el código.
+
+| Trampa | Síntoma | Por qué |
+|---|---|---|
+| **El buffer de MQTT** | la placa conecta, se suscribe y **no recibe nada** | PubSubClient trae 256 bytes y un documento de shadow pasa del kilobyte. Lo que no cabe se descarta sin aviso. El sketch llama a `setBufferSize(4096)` |
+| **La fecha** | AWS rechaza la conexión sin explicar | Un certificado tiene periodo de validez. Si el reloj está en 1970, no vale. El sketch sincroniza por NTP antes de conectar |
+
+La primera es nueva de este laboratorio: en el 03 los mensajes eran de 50
+bytes y cabían de sobra. Aquí no, y es el tipo de fallo que te puede costar
+una tarde si no sabes que existe.
+
+### Probarlo
+
+Enchufa la placa, abre el monitor serie a **115200** y mira: conecta,
+pregunta su estado, obedece lo que haya pendiente y empieza a transmitir.
+
+Y ahora lo mismo del paso 5, pero con un LED:
+
+1. Desenchufa la placa.
+2. `docker compose run --rm app python shadow_app.py encender`
+3. Vuelve a enchufarla.
+
+**El LED se enciende solo.** Nadie repitió la orden.
 
 ---
 
