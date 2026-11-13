@@ -168,13 +168,32 @@ if config.ENDPOINT:
 if cert and llave and raiz and config.ENDPOINT and fallos == 0:
     titulo("4. ¿Te reconoce AWS?")
 
-    visto = {"conectado": False, "respuesta": None, "suscrito": False}
+    visto = {
+        "conectado": False,
+        "respuesta": None,
+        "suscrito": False,
+        "rechazo_suscripcion": False,
+        "expulsado": False,
+    }
 
     def al_conectar(cliente, userdata, flags, codigo, propiedades=None):
         visto["conectado"] = str(codigo) in ("Success", "0")
 
     def al_suscribir(cliente, userdata, mid, codigos, propiedades=None):
+        # AWS confirma la suscripción. Si NO estaba autorizada, el código que
+        # viene aquí es 128 (0x80). Distinguirlo importa: un 128 señala la
+        # política sin lugar a dudas, y un SUBACK correcto la descarta.
         visto["suscrito"] = True
+        for codigo in codigos:
+            # paho entrega objetos ReasonCode, no enteros: el número está en
+            # .value. Usamos getattr por si alguna versión devuelve el int.
+            if int(getattr(codigo, "value", codigo)) >= 128:
+                visto["rechazo_suscripcion"] = True
+
+    def al_desconectar(cliente, userdata, flags, codigo, propiedades=None):
+        # Si nos echan después de habernos aceptado, lo normal es que haya
+        # otro cliente usando el mismo nombre. El broker no admite dos.
+        visto["expulsado"] = True
 
     def al_recibir(cliente, userdata, mensaje):
         visto["respuesta"] = mensaje.topic
@@ -182,6 +201,7 @@ if cert and llave and raiz and config.ENDPOINT and fallos == 0:
     cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=config.ID)
     cliente.on_connect = al_conectar
     cliente.on_subscribe = al_suscribir
+    cliente.on_disconnect = al_desconectar
     cliente.on_message = al_recibir
 
     try:
@@ -212,36 +232,93 @@ if cert and llave and raiz and config.ENDPOINT and fallos == 0:
             # --- 5. Los permisos del shadow ---------------------------
             titulo("5. ¿Tu política autoriza el shadow?")
 
-            # La prueba real: suscribirse a las respuestas y pedir el
-            # documento. Si la política no cubre los topics $aws/..., AWS
-            # corta la conexión en cuanto intentamos suscribirnos. No hay
-            # mensaje de error: hay silencio y desconexión.
-            cliente.subscribe(config.TOPIC_GET_ACEPTADO, qos=1)
-            cliente.subscribe(config.TOPIC_GET_RECHAZADO, qos=1)
-            time.sleep(1.5)
-            cliente.publish(config.TOPIC_GET, "", qos=1)
+            # Cuando una suscripción no está autorizada, AWS no responde
+            # "permiso denegado": CORTA LA CONEXIÓN. El problema es que
+            # perder la conexión también pasa cuando otro cliente se conecta
+            # con tu mismo nombre. Mismo síntoma, dos causas, y arreglos
+            # completamente distintos.
+            #
+            # Para distinguirlas hacemos primero una PRUEBA DE CONTROL: nos
+            # suscribimos a un topic que la política del laboratorio 03 ya
+            # permitía. Si eso también falla, el problema no es del shadow.
+            # Es el método de siempre: cambiar una sola variable a la vez.
 
-            for _ in range(80):
-                if visto["respuesta"]:
-                    break
-                time.sleep(0.1)
+            def esperar(condicion, segundos=5.0):
+                limite = time.time() + segundos
+                while time.time() < limite:
+                    if condicion() or visto["expulsado"]:
+                        return
+                    time.sleep(0.1)
 
-            if visto["respuesta"] == config.TOPIC_GET_ACEPTADO:
-                bien("puedes leer tu shadow (y ya tiene contenido)")
-            elif visto["respuesta"] == config.TOPIC_GET_RECHAZADO:
-                bien("puedes hablar con el shadow (todavía no existe: normal)")
-                print(f"        {GRIS}se creará al arrancar shadow_dispositivo.py{FIN}")
-            else:
+            cliente.subscribe(config.TOPIC_COMANDOS, qos=1)
+            esperar(lambda: visto["suscrito"])
+
+            if visto["expulsado"] or not visto["suscrito"]:
                 mal(
-                    "tu política NO autoriza los topics del shadow",
-                    """Es lo esperado la primera vez: la política del
-                       laboratorio 03 solo cubre fablab/planta1/*, y los
-                       topics del shadow empiezan por $aws/things/...
-                       Genera la política nueva:
-                       docker compose run --rm dispositivo python generar_politica.py
-                       y pégala en Security -> Policies -> tu política -> Edit,
-                       marcando «establecer como versión activa».""",
+                    f"te echaron antes de llegar al shadow: hay otro '{config.ID}'",
+                    """El corte ocurrió en un topic que tu política YA permitía
+                       desde el laboratorio 03, así que no es el shadow.
+                       Dos clientes no pueden usar el mismo nombre a la vez:
+                       el broker expulsa al anterior una y otra vez.
+                       Busca al otro:
+                       - ¿shadow_dispositivo.py o publicar.py en otra terminal?
+                       - ¿un contenedor olvidado?   docker ps
+                       - ¿el ESP32 encendido con este mismo certificado?""",
                 )
+            else:
+                # El control pasó: la conexión es sana y la política base
+                # funciona. Ahora sí, lo que vinimos a probar.
+                visto["suscrito"] = False
+
+                cliente.subscribe(config.TOPIC_GET_ACEPTADO, qos=1)
+                cliente.subscribe(config.TOPIC_GET_RECHAZADO, qos=1)
+                esperar(lambda: visto["suscrito"])
+
+                if not visto["expulsado"] and visto["suscrito"]:
+                    cliente.publish(config.TOPIC_GET, "", qos=1)
+                    esperar(lambda: visto["respuesta"] is not None, 8.0)
+
+                if visto["respuesta"] == config.TOPIC_GET_ACEPTADO:
+                    bien("puedes leer tu shadow (y ya tiene contenido)")
+
+                elif visto["respuesta"] == config.TOPIC_GET_RECHAZADO:
+                    bien("puedes hablar con el shadow (todavía no existe: normal)")
+                    print(f"        {GRIS}se creará al arrancar shadow_dispositivo.py{FIN}")
+
+                # Sin respuesta, pero la prueba de control SÍ pasó: el fallo
+                # está en los topics del shadow y en ningún otro sitio.
+                elif (
+                    visto["expulsado"]
+                    or visto["rechazo_suscripcion"]
+                    or not visto["suscrito"]
+                ):
+                    mal(
+                        "tu política NO autoriza los topics del shadow",
+                        """Y esta vez lo sabemos con seguridad: un segundo
+                           antes te suscribiste sin problema a
+                           fablab/planta1/..., y AWS te cortó justo al pedir
+                           $aws/things/...
+                           Genera la política nueva:
+                           docker compose run --rm dispositivo python generar_politica.py
+                           y pégala en Security -> Policies -> tu política ->
+                           Edit, marcando «establecer como versión activa».
+                           OJO, el error más común a estas alturas: tiene que
+                           ser la política ADJUNTA A TU CERTIFICADO. Si creaste
+                           varios objetos, cada uno nació con la suya y es
+                           fácil editar la que no es. Compruébalo en
+                           Security -> Certificates -> tu certificado ->
+                           pestaña Policies.""",
+                    )
+
+                else:
+                    mal(
+                        "AWS no contestó a la consulta del shadow",
+                        """La conexión y las dos suscripciones funcionaron, así
+                           que los permisos están bien. Suele ser una red lenta:
+                           vuelve a ejecutar esto.
+                           Si se repite, revisa en Security -> Certificates que
+                           tu certificado siga 'Active' y adjunto a tu objeto.""",
+                    )
 
     except ssl.SSLError as error:
         mal(

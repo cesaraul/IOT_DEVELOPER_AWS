@@ -80,6 +80,7 @@ def region() -> str:
 #   telemetría  ->  muchos mensajes que fluyen, y que nadie guarda por ti
 #   shadow      ->  un estado que persiste, y que AWS guarda por ti
 TOPIC_TELEMETRIA = f"fablab/planta1/{ID}/telemetria"
+TOPIC_COMANDOS = f"fablab/planta1/{ID}/comandos"
 
 SHADOW = f"$aws/things/{ID}/shadow"
 
