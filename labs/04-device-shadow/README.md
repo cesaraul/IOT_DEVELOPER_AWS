@@ -88,7 +88,13 @@ docker compose run --rm dispositivo python generar_politica.py
 ```
 
 El script lee el archivo `-Policy` que vino dentro de tu *connection kit*,
-saca de ahí tu **número de cuenta** y tu **región**, y escribe dos archivos:
+saca de ahí tu **número de cuenta** y tu **región**, y **te imprime en la
+terminal el JSON listo para copiar**. No se conecta a AWS: ese archivo ya
+tiene tus datos escritos dentro.
+
+Copia lo que aparece entre las dos líneas de guiones y pégalo en la consola.
+Además te deja dos archivos en esta carpeta, por si prefieres abrirlos con un
+editor:
 
 | Archivo | Para quién | Dónde se pega |
 |---|---|---|

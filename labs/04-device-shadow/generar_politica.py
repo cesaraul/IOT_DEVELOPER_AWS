@@ -130,18 +130,33 @@ def main() -> None:
 
     json.loads(texto_iam)
 
-    print(f"\n  {VERDE}Listo.{FIN} Dos archivos nuevos en esta carpeta:\n")
-    print("      mi-politica.json       -> para el CERTIFICADO de tu dispositivo")
+    # Lo imprimimos aquí mismo. Podríamos limitarnos a decir "está en el
+    # archivo", pero entonces hay que explicar cómo se abre un .json en cada
+    # sistema operativo, y ese rodeo atasca a media clase. Copiar de la
+    # terminal funciona en todas partes.
+    print(f"\n  {VERDE}Listo.{FIN} Esto es lo que tienes que pegar en la consola:\n")
+    print(f"  {GRIS}IoT Core -> Security -> Policies -> tu política -> Edit -> JSON{FIN}")
+    print(f"  {GRIS}(selecciona desde la llave de abajo hasta la última){FIN}")
+    print()
+    print("-" * 70)
+    print(texto.strip())
+    print("-" * 70)
+    print()
+    print(f"  {VERDE}Y marca «establecer como versión activa» antes de guardar.{FIN}")
+    print(f"  {GRIS}Si no lo marcas, se crea una versión nueva que no se aplica{FIN}")
+    print(f"  {GRIS}a nada: guarda bien, no da error, y no cambia nada.{FIN}")
+    print()
+    print("  También quedaron estos dos archivos en esta carpeta, por si")
+    print("  prefieres copiarlos desde un editor:")
+    print()
+    print("      mi-politica.json       -> el CERTIFICADO de tu dispositivo")
     print("                                (IoT Core -> Security -> Policies)")
-    print("      mi-politica-app.json   -> para el USUARIO DE IAM de tu aplicación")
+    print("      mi-politica-app.json   -> el USUARIO DE IAM de tu aplicación")
     print("                                (IAM -> Usuarios -> Permisos)")
     print()
     print(f"  {GRIS}Son dos identidades distintas y por eso son dos políticas{FIN}")
     print(f"  {GRIS}distintas: el dispositivo entra con un certificado, la{FIN}")
     print(f"  {GRIS}aplicación entra con claves. No se mezclan.{FIN}")
-    print()
-    print("  Al pegar la primera en la consola, marca «establecer como versión")
-    print("  activa» antes de guardar, o no se aplicará a nada.")
     print()
 
 
