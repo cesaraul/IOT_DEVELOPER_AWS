@@ -72,6 +72,15 @@ def region() -> str:
 # de AWS: /update/delta, que llega cuando hay algo que el dispositivo todavía
 # no ha hecho.
 
+# El topic de telemetría del laboratorio 03, que seguimos usando. Fíjate en
+# la diferencia con los de abajo: este lo inventaste tú y describe TU planta;
+# los del shadow los impone AWS. Los dos conviven en el mismo dispositivo y
+# en la misma conexión, y cada uno sirve para una cosa distinta:
+#
+#   telemetría  ->  muchos mensajes que fluyen, y que nadie guarda por ti
+#   shadow      ->  un estado que persiste, y que AWS guarda por ti
+TOPIC_TELEMETRIA = f"fablab/planta1/{ID}/telemetria"
+
 SHADOW = f"$aws/things/{ID}/shadow"
 
 TOPIC_UPDATE = f"{SHADOW}/update"

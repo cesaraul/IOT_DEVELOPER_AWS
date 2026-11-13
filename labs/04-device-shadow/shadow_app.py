@@ -10,6 +10,7 @@ CÓMO SE EJECUTA
     docker compose run --rm app python shadow_app.py encender
     docker compose run --rm app python shadow_app.py apagar
     docker compose run --rm app python shadow_app.py umbral 60
+    docker compose run --rm app python shadow_app.py intervalo 2
 
 LO IMPORTANTE DE ESTE ARCHIVO — LÉELO AUNQUE NO LEAS EL RESTO
     Compara las primeras líneas de código con las de shadow_dispositivo.py.
@@ -161,6 +162,15 @@ def main() -> None:
                 print("\n  Dime el número:  shadow_app.py umbral 60\n")
                 raise SystemExit(1)
             desear(iot, {"umbral": int(sys.argv[2])})
+
+        elif orden == "intervalo":
+            # Cambiar cada cuántos segundos transmite el equipo. Es el
+            # ejemplo más claro de estado gobernando telemetría: lo cambias
+            # aquí y el ritmo de los datos cambia al instante.
+            if len(sys.argv) < 3:
+                print("\n  Dime los segundos:  shadow_app.py intervalo 2\n")
+                raise SystemExit(1)
+            desear(iot, {"intervalo": int(sys.argv[2])})
 
         else:
             ayuda()

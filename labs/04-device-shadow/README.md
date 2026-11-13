@@ -152,19 +152,39 @@ aplicación con sus claves— y te dice exactamente qué falta en cada una.
 
 ---
 
-## Paso 4 · El dispositivo que obedece
+## Paso 4 · El dispositivo que transmite y obedece
 
-Arranca el equipo:
+El equipo simula un tanque con una bomba, y hace **las dos cosas que hace un
+equipo real, a la vez y por la misma conexión**:
+
+| | Topic | Qué lleva |
+|---|---|---|
+| **Telemetría** | `fablab/planta1/TU-ID/telemetria` | nivel y temperatura, cada pocos segundos |
+| **Estado** | `$aws/things/TU-ID/shadow/update` | si la bomba va encendida, el umbral de alarma, el intervalo |
+
+El primero lo inventaste tú en el laboratorio 03. El segundo lo impone AWS.
+Fíjate en la diferencia ahora, porque es media clase.
 
 ```bash
 docker compose run --rm dispositivo python shadow_dispositivo.py
 ```
 
-Mira lo que imprime al arrancar. Hace tres cosas, **en este orden**:
+Mira lo que imprime al arrancar. Hace cuatro cosas, **en este orden**:
 
 1. Se suscribe a las respuestas.
 2. Pregunta por su estado (`/get`).
 3. Reporta lo que es.
+4. **Y solo entonces** empieza a transmitir.
+
+> El punto 4 no va al final por casualidad: un equipo que empieza a mandar
+> datos antes de leer su configuración está transmitiendo con valores que
+> quizá ya no son los correctos.
+
+### Mira llegar los datos
+
+En la consola: **IoT Core** → **Probar** (*Test*) → **Cliente de prueba de
+MQTT** → pestaña *Suscribirse a un tema* → escribe `fablab/#` →
+**Suscribirse**. Deja esa pestaña abierta.
 
 > ### La regla de oro
 >
@@ -209,6 +229,28 @@ delta desapareció.
 **Nadie le mandó un mensaje al programa.** El programa preguntó qué debía
 ser, y AWS se lo dijo.
 
+### Y ahora mira los datos
+
+Vuelve al cliente de prueba de MQTT. **El nivel del tanque está subiendo.**
+No porque nadie se lo haya dicho a la telemetría, sino porque la bomba está
+encendida y el equipo mide lo que hay.
+
+Prueba estas tres cosas desde el shadow y míralas en los datos:
+
+| Cambia en `desired` | Qué ves en la telemetría |
+|---|---|
+| `{"bomba": "apagada"}` | el nivel empieza a **bajar** |
+| `{"intervalo": 2}` | los mensajes llegan **más seguido** |
+| `{"umbral": 30}` | aparece `"alarma": true` al pasar de 30 |
+
+**Esto es la clase entera en una pantalla.** El shadow es la perilla; la
+telemetría es el efecto. El estado se configura desde la nube y persiste; las
+mediciones fluyen y no las guarda nadie por ti.
+
+Fíjate también en dónde se decide la alarma: **en el dispositivo**, con el
+umbral que le bajó la nube. Es el patrón normal — la nube configura, el equipo
+decide en tiempo real. Si se cae la conexión, el equipo sigue decidiendo.
+
 ---
 
 ## Paso 5 · El dispositivo apagado
@@ -240,6 +282,7 @@ la primera.
 docker compose run --rm app python shadow_app.py ver
 docker compose run --rm app python shadow_app.py encender
 docker compose run --rm app python shadow_app.py umbral 60
+docker compose run --rm app python shadow_app.py intervalo 2
 docker compose run --rm app python shadow_app.py apagar
 ```
 
@@ -259,7 +302,7 @@ Esto separa a quien entendió de quien copió los comandos.
 
 | Usa **shadow** para... | Usa un **topic normal** para... |
 |---|---|
-| **Estado**: encendido/apagado, umbral, modo, versión de firmware | **Telemetría**: temperatura cada 5 segundos |
+| **Estado**: encendido/apagado, umbral, intervalo, versión de firmware | **Telemetría**: nivel y temperatura cada pocos segundos |
 | Algo que te importa **ahora mismo** | Algo que te importa como **serie histórica** |
 | Pocos cambios, que deben persistir | Muchos mensajes, que fluyen |
 
