@@ -129,12 +129,19 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 ├── README.md                    Este archivo
 ├── docs/
 │   ├── instalar-docker.md       Prepara tu computadora (empieza aquí)
+│   ├── clases/                  Las diapositivas de cada clase
 │   └── img/                     Diagramas de las clases
 └── labs/
     ├── 02-protocolos/           HTTP y MQTT, con broker real
     ├── 03-iot-core/             Tu primer dispositivo en AWS
     └── 04-device-shadow/        El gemelo digital
 ```
+
+### Diapositivas
+
+| Clase | Tema |
+|---|---|
+| 4 | [AWS IoT Core (parte 2) — Device Shadow](docs/clases/clase-04-aws-iot-core-parte-2.pdf) |
 
 ### Laboratorios disponibles
 

@@ -1,5 +1,8 @@
 # Laboratorio 04 — Device Shadow: el gemelo digital
 
+> 📊 **Diapositivas de la clase:**
+> [AWS IoT Core (parte 2)](../../docs/clases/clase-04-aws-iot-core-parte-2.pdf)
+
 En el laboratorio anterior mandaste un comando y el dispositivo lo recibió.
 Pero solo si estaba encendido. **Si estaba apagado, el comando se perdió para
 siempre** — y nadie te avisó, porque nadie hizo nada mal.
