@@ -1,0 +1,47 @@
+name: simulador-reglas
+
+# Un banco de pruebas del Rules Engine, entero en tu laptop.
+#
+#   docker compose up
+#   y abre  http://localhost:8080
+#
+# No necesita cuenta de AWS, no cuesta nada y se puede romper todas las
+# veces que haga falta. Es andamio para entender: lo que se construye de
+# verdad va en la consola, después.
+
+services:
+  # El broker local. En AWS esto sería IoT Core.
+  broker:
+    image: eclipse-mosquitto:2
+    container_name: sim-broker
+    ports:
+      - "1883:1883"   # MQTT normal: para el dispositivo
+      - "9001:9001"   # MQTT sobre WebSockets: para el navegador
+    volumes:
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  # El tanque. Publica el mismo payload que el del laboratorio 04.
+  dispositivo:
+    build: ./dispositivo
+    container_name: sim-dispositivo
+    environment:
+      MQTT_HOST: broker
+      MQTT_PORT: "1883"
+      DISPOSITIVO_ID: tanque-01
+      INTERVALO_S: "2"
+    depends_on:
+      - broker
+    restart: unless-stopped
+
+  # La interfaz. Son archivos estáticos: el motor de reglas y las funciones
+  # corren en TU navegador, no en un servidor. Por eso aquí no hay nada que
+  # construir ni ninguna dependencia que instalar.
+  web:
+    image: nginx:alpine
+    container_name: sim-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    depends_on:
+      - broker

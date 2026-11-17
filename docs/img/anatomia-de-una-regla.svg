@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="1000" height="480" role="img" aria-label="Las cuatro partes de una regla: de qué topics escucho, cuáles mensajes me importan, qué me llevo de cada uno y qué hago con él.">
+<title>La anatomía de una regla</title>
+<desc>Una regla tiene cuatro partes en orden. FROM dice de qué topics escucha. WHERE dice cuáles mensajes importan. SELECT dice qué parte del mensaje se lleva. Y la acción dice qué hacer con el resultado. Las tres primeras forman la consulta; la cuarta es lo que ocurre.</desc>
+
+<defs>
+<marker id="pAn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#0D6E6E"/></marker>
+</defs>
+
+<rect width="1000" height="480" fill="#FFFFFF"/>
+<text x="500" y="58" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#0D6E6E">La anatomía de una regla</text>
+
+<g font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" text-anchor="middle">
+<text x="380" y="112" font-size="20" font-weight="600" fill="#4A5663">LA CONSULTA · qué mensajes me interesan</text>
+<text x="860" y="112" font-size="20" font-weight="600" fill="#4A5663">LA ACCIÓN</text>
+
+<!-- 1. FROM -->
+<rect x="40" y="135" width="200" height="180" rx="14" fill="#E6F5F3" stroke="#0D6E6E" stroke-width="2.5"/>
+<text x="140" y="178" font-size="25" font-weight="700" fill="#0B5C5C">FROM</text>
+<text x="140" y="215" font-size="17" fill="#16202B">¿de qué topics</text>
+<text x="140" y="238" font-size="17" fill="#16202B">escucho?</text>
+<text x="140" y="283" font-size="14" fill="#0D6E6E">fablab/planta1/+</text>
+<text x="140" y="302" font-size="14" fill="#0D6E6E">/telemetria</text>
+
+<!-- 2. WHERE -->
+<rect x="280" y="135" width="200" height="180" rx="14" fill="#E6F5F3" stroke="#0D6E6E" stroke-width="2.5"/>
+<text x="380" y="178" font-size="25" font-weight="700" fill="#0B5C5C">WHERE</text>
+<text x="380" y="215" font-size="17" fill="#16202B">¿cuáles me</text>
+<text x="380" y="238" font-size="17" fill="#16202B">importan?</text>
+<text x="380" y="292" font-size="14" fill="#0D6E6E">alarma = true</text>
+
+<!-- 3. SELECT -->
+<rect x="520" y="135" width="200" height="180" rx="14" fill="#E6F5F3" stroke="#0D6E6E" stroke-width="2.5"/>
+<text x="620" y="178" font-size="25" font-weight="700" fill="#0B5C5C">SELECT</text>
+<text x="620" y="215" font-size="17" fill="#16202B">¿qué me llevo</text>
+<text x="620" y="238" font-size="17" fill="#16202B">de cada uno?</text>
+<text x="620" y="292" font-size="14" fill="#0D6E6E">nivel, temp</text>
+
+<!-- 4. ACCIÓN -->
+<rect x="760" y="135" width="200" height="180" rx="14" fill="#16202B"/>
+<text x="860" y="178" font-size="25" font-weight="700" fill="#FFFFFF">ACCIÓN</text>
+<text x="860" y="215" font-size="17" fill="#FFFFFF">¿qué hago</text>
+<text x="860" y="238" font-size="17" fill="#FFFFFF">con él?</text>
+<text x="860" y="283" font-size="14" fill="#8FD6D0">republicar en</text>
+<text x="860" y="302" font-size="14" fill="#8FD6D0">fablab/alarmas</text>
+</g>
+
+<g stroke="#0D6E6E" stroke-width="3.5" fill="none" marker-end="url(#pAn)">
+<path d="M240 225 L 272 225"/>
+<path d="M480 225 L 512 225"/>
+<path d="M720 225 L 752 225"/>
+</g>
+
+<text x="500" y="378" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="24" fill="#4A5663">Una regla es una consulta que se queda esperando: AWS la aplica a</text>
+<text x="500" y="410" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="24" fill="#4A5663">cada mensaje que llega, uno por uno, en el momento en que llega.</text>
+<text x="500" y="452" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="22" fill="#4A5663">Lo que no encaja, se descarta. No se guarda en ninguna parte.</text>
+</svg>

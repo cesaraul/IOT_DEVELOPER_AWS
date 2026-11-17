@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador del Rules Engine</title>
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="barra">
+    <div>
+      <h1>Simulador del Rules Engine</h1>
+      <p class="sub">Arma la regla con bloques y mira qué le pasa a cada mensaje. Esto corre en tu laptop: no es AWS, no cuesta nada, y se puede romper.</p>
+    </div>
+    <div class="barra-derecha">
+      <div class="zoom" title="Ajusta el tamaño de toda la interfaz (útil en proyector)">
+        <span>Tamaño</span>
+        <button @click="ajustarTamano(-10)">−</button>
+        <output>{{ tamano }} %</output>
+        <button @click="ajustarTamano(10)">+</button>
+      </div>
+      <span class="pastilla" :class="{ viva: conectado }">{{ conectado ? 'conectado al broker' : 'sin conexión' }}</span>
+      <button class="btn" @click="reiniciar">Reiniciar demo</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="rejilla">
+
+      <!-- ============================================ columna izquierda -->
+      <section>
+
+        <div class="tarjeta">
+          <h2>Arma tu regla</h2>
+          <p class="pista">Cada bloque es una parte de la consulta. Lo que armes aquí es válido en AWS de verdad.</p>
+
+          <!-- FROM -->
+          <div class="bloque">
+            <div class="bloque-cab">
+              <span class="palabra">FROM</span>
+              <span class="pregunta">¿de qué topics escucho?</span>
+            </div>
+            <div class="fila">
+              <select v-model="regla.desde">
+                <option value="fablab/planta1/+/telemetria">fablab/planta1/+/telemetria — cualquier equipo</option>
+                <option value="fablab/planta1/tanque-01/telemetria">fablab/planta1/tanque-01/telemetria — solo este</option>
+                <option value="fablab/#">fablab/# — absolutamente todo</option>
+                <option value="fablab/planta2/+/telemetria">fablab/planta2/+/telemetria — otra planta (no llega nada)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- WHERE -->
+          <div class="bloque">
+            <div class="bloque-cab">
+              <span class="palabra">WHERE</span>
+              <span class="pregunta">¿cuáles de esos mensajes me importan?</span>
+            </div>
+            <div class="fila">
+              <select v-model="regla.condicion.campo">
+                <option value="">(sin condición: pasan todos)</option>
+                <option value="alarma">alarma</option>
+                <option value="nivel">nivel</option>
+                <option value="temp">temp</option>
+              </select>
+
+              <template v-if="regla.condicion.campo">
+                <select v-model="regla.condicion.operador">
+                  <option value="=">=</option>
+                  <option value="<>">&lt;&gt;</option>
+                  <option value=">">&gt;</option>
+                  <option value="<">&lt;</option>
+                  <option value=">=">&gt;=</option>
+                  <option value="<=">&lt;=</option>
+                </select>
+
+                <select v-if="regla.condicion.campo === 'alarma'" v-model="regla.condicion.valor">
+                  <option :value="true">true</option>
+                  <option :value="false">false</option>
+                </select>
+                <input v-else type="number" v-model.number="regla.condicion.valor" style="width:110px">
+              </template>
+            </div>
+          </div>
+
+          <!-- SELECT -->
+          <div class="bloque">
+            <div class="bloque-cab">
+              <span class="palabra">SELECT</span>
+              <span class="pregunta">¿qué me llevo de cada mensaje?</span>
+            </div>
+            <div class="fila" style="margin-bottom:10px">
+              <button class="chip" :class="{ puesto: regla.seleccion.todo }" @click="regla.seleccion.todo = true">*  (todo)</button>
+              <button class="chip" :class="{ puesto: !regla.seleccion.todo }" @click="regla.seleccion.todo = false">campos sueltos</button>
+            </div>
+            <div class="fila" v-if="!regla.seleccion.todo">
+              <button v-for="c in camposPosibles" :key="c"
+                      class="chip" :class="{ puesto: regla.seleccion.campos.includes(c) }"
+                      @click="alternarCampo(c)">{{ c }}</button>
+            </div>
+            <div class="fila" style="margin-top:10px">
+              <button class="chip" :class="{ puesto: regla.seleccion.anadeDispositivo }"
+                      @click="regla.seleccion.anadeDispositivo = !regla.seleccion.anadeDispositivo">+ topic(3)</button>
+              <button class="chip" :class="{ puesto: regla.seleccion.anadeHora }"
+                      @click="regla.seleccion.anadeHora = !regla.seleccion.anadeHora">+ timestamp()</button>
+            </div>
+          </div>
+
+          <!-- ACCIÓN -->
+          <div class="bloque">
+            <div class="bloque-cab">
+              <span class="palabra">ACCIÓN</span>
+              <span class="pregunta">¿y qué hago con lo que pase el filtro?</span>
+            </div>
+            <div class="fila" style="gap:18px; margin-bottom:10px">
+              <label class="radio"><input type="radio" value="republicar" v-model="regla.accion.tipo"> Republicar</label>
+              <label class="radio"><input type="radio" value="correo" v-model="regla.accion.tipo"> Mandar correo</label>
+              <label class="radio"><input type="radio" value="lambda" v-model="regla.accion.tipo"> Llamar a una Lambda</label>
+            </div>
+            <div class="fila" v-if="regla.accion.tipo === 'republicar'">
+              <span class="pregunta">a</span>
+              <select v-model="regla.accion.topic">
+                <option value="fablab/alarmas">fablab/alarmas</option>
+                <option value="fablab/revisados">fablab/revisados</option>
+              </select>
+            </div>
+            <div class="fila" v-if="regla.accion.tipo === 'lambda'">
+              <select v-model="regla.accion.funcion">
+                <option v-for="f in funciones" :key="f.id" :value="f.id">{{ f.nombre }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="tarjeta">
+          <h2>Y esto es lo que acabas de escribir</h2>
+          <p class="pista">La consulta de verdad, la que va en la consola de AWS.</p>
+          <pre class="sql" v-html="sqlConColores"></pre>
+          <p class="nota-puente">Cópiala tal cual: en la consola es <b>IoT Core → Enrutamiento de mensajes → Reglas</b>. Aquí los bloques solo ofrecen cosas que AWS acepta.</p>
+        </div>
+
+        <div class="tarjeta" v-if="regla.accion.tipo === 'lambda' && funcionElegida">
+          <h2>{{ funcionElegida.nombre }}</h2>
+          <p class="resuelve">{{ funcionElegida.resuelve }}</p>
+          <p class="explica">{{ funcionElegida.explicacion }}</p>
+          <pre class="codigo">{{ funcionElegida.codigo }}</pre>
+          <h2 style="margin-top:18px; font-size:17px">Registro de la función</h2>
+          <ul class="lista">
+            <li v-for="(l, i) in registroLambda" :key="i">{{ l }}</li>
+            <li v-if="!registroLambda.length" class="vacio">Todavía no se ha ejecutado.</li>
+          </ul>
+        </div>
+
+      </section>
+
+      <!-- ============================================= columna derecha -->
+      <section>
+
+        <div class="tarjeta">
+          <h2>Qué está pasando</h2>
+          <p class="pista">Cada punto es un mensaje. Si encaja con la regla, sigue; si no, se queda en el camino.</p>
+
+          <div class="lienzo" ref="lienzo">
+            <div class="flecha flecha-1"></div>
+            <div class="flecha flecha-2"></div>
+
+            <div class="caja caja-dispositivo">
+              <b>Dispositivo</b>
+              <small>tanque-01</small>
+              <small>bomba: {{ estadoEquipo.bomba }}</small>
+            </div>
+
+            <div class="caja caja-regla" :class="destelloRegla">
+              <b>Regla</b>
+              <div class="mini-sql">{{ sql }}</div>
+            </div>
+
+            <div class="caja caja-destino">
+              <b>{{ nombreDestino }}</b>
+              <small>{{ subDestino }}</small>
+            </div>
+          </div>
+
+          <div class="medidor">
+            <div class="medidor-barra">
+              <div class="medidor-relleno" :class="{ alta: ultimoNivel > estadoEquipo.umbral }"
+                   :style="{ width: ultimoNivel + '%' }"></div>
+              <div class="medidor-umbral" :style="{ left: estadoEquipo.umbral + '%' }"></div>
+            </div>
+            <div class="medidor-pie">
+              <span>nivel {{ ultimoNivel.toFixed(1) }}</span>
+              <span>umbral {{ estadoEquipo.umbral }}</span>
+            </div>
+          </div>
+
+          <div class="contadores" style="margin-top:16px">
+            <div class="contador"><b>{{ cont.recibidos }}</b><span>mensajes</span></div>
+            <div class="contador"><b>{{ cont.aceptados }}</b><span>pasan la regla</span></div>
+            <div class="contador"><b>{{ cont.descartados }}</b><span>descartados</span></div>
+            <div class="contador" :class="{ grito: cont.correos > 5 }"><b>{{ cont.correos }}</b><span>correos</span></div>
+          </div>
+        </div>
+
+        <div class="tarjeta">
+          <h2>Mensaje a mensaje</h2>
+          <p class="pista">Lo verde salió por el otro lado. Lo gris no existe en ninguna parte.</p>
+          <ul class="lista">
+            <li v-for="m in historial" :key="m.id" :class="m.encaja ? 'aceptado' : 'descartado'">
+              <template v-if="m.encaja">✓ {{ m.salida }}</template>
+              <template v-else>· {{ m.entrada }} — {{ m.motivo }}</template>
+            </li>
+            <li v-if="!historial.length" class="vacio">Esperando el primer mensaje...</li>
+          </ul>
+        </div>
+
+        <div class="tarjeta" v-if="correos.length">
+          <h2>Bandeja de entrada</h2>
+          <p class="pista">Uno por cada vez que la regla disparó la acción.</p>
+          <ul class="lista">
+            <li v-for="(c, i) in correos" :key="i">{{ c }}</li>
+          </ul>
+        </div>
+
+        <div class="tarjeta" v-if="tabla.length">
+          <h2>Tabla</h2>
+          <p class="pista">Lo que guardó la función. En AWS esto sería DynamoDB — el Día 6.</p>
+          <table class="tabla">
+            <tr>
+              <th v-for="k in columnasTabla" :key="k">{{ k }}</th>
+            </tr>
+            <tr v-for="(f, i) in tabla" :key="i">
+              <td v-for="k in columnasTabla" :key="k">{{ f[k] }}</td>
+            </tr>
+          </table>
+        </div>
+
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="vendor/vue.global.prod.js"></script>
+<script src="vendor/mqtt.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
