@@ -142,6 +142,7 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 | Clase | Tema |
 |---|---|
 | 4 | [AWS IoT Core (parte 2) — Device Shadow](docs/clases/clase-04-aws-iot-core-parte-2.pdf) |
+| 5 | [Rules Engine y Lambda](docs/clases/clase-05-rules-engine-y-lambda.pdf) |
 
 ### Laboratorios disponibles
 
@@ -150,6 +151,7 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 | [02 · Protocolos IoT](labs/02-protocolos/) | HTTP y MQTT paso a paso, y un banco de pruebas en vivo con broker real |
 | [03 · AWS IoT Core](labs/03-iot-core/) | Crear tu dispositivo, conectarlo con certificado X.509 y publicar telemetría de verdad en AWS |
 | [04 · Device Shadow](labs/04-device-shadow/) | Controlar un equipo que puede estar apagado, y las dos identidades: certificado para el dispositivo, IAM para la aplicación |
+| [05 · Rules Engine](labs/05-rules-engine/simulador/) | Un simulador local para entender qué es una regla —armándola con bloques— antes de tocar la consola |
 
 Cada laboratorio tiene su propio `README.md` con el paso a paso y un script
 `comprobar.py` que revisa que todo esté en su sitio antes de empezar. Si algo

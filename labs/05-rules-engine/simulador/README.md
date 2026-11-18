@@ -1,5 +1,8 @@
 # Simulador del Rules Engine
 
+> 📊 **Diapositivas de la clase:**
+> [Rules Engine y Lambda](../../../docs/clases/clase-05-rules-engine-y-lambda.pdf)
+
 Un banco de pruebas para entender **qué es una regla** antes de tocar AWS.
 Armas la regla con bloques, ves qué mensajes pasan y cuáles se descartan, y
 eliges qué pasa con los que pasan.
