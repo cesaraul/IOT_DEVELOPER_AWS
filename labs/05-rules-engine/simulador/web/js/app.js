@@ -242,10 +242,16 @@ createApp({
     },
 
     conectar() {
-      // El navegador habla MQTT sobre WebSockets, por el puerto 9001 del
-      // mismo Mosquitto al que publica el dispositivo. Es el mismo broker y
-      // el mismo protocolo: solo cambia el transporte.
-      const url = `ws://${location.hostname}:9001`;
+      // El navegador habla MQTT sobre WebSockets con el mismo Mosquitto al
+      // que publica el dispositivo: mismo broker, mismo protocolo, solo
+      // cambia el transporte.
+      //
+      // Nos conectamos al MISMO puerto por el que llegó esta página, en la
+      // ruta /mqtt, y nginx reenvía al broker por dentro de Docker. Así el
+      // laboratorio abre un solo puerto en tu máquina — en Windows, Hyper-V
+      // se reserva puertos al azar y cuantos menos pidamos, mejor.
+      const protocolo = location.protocol === "https:" ? "wss" : "ws";
+      const url = `${protocolo}://${location.host}/mqtt`;
       const cliente = mqtt.connect(url, { reconnectPeriod: 2000 });
       this.cliente = cliente;
 

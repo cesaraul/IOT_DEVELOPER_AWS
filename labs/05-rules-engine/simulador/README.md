@@ -41,7 +41,13 @@ Reglas**. El simulador no es una metáfora de una regla: es una regla.
 |---|---|---|
 | `broker` | Mosquitto en tu laptop | AWS IoT Core |
 | `dispositivo` | Un tanque con una bomba | Tu Thing de la clase 3 |
-| `web` | La interfaz | — |
+| `web` | La interfaz, y el puente al broker | — |
+
+**Solo se abre un puerto en tu máquina: el 8080.** El dispositivo y el
+broker se hablan por la red interna de Docker, y el navegador llega al
+broker a través de la web, en la ruta `/mqtt`. Un puerto que pueda chocar
+en vez de tres — y en Windows eso importa más de lo que parece (ver *Si no
+arranca*, abajo).
 
 El **motor de reglas y las tres funciones corren en tu navegador**, no en un
 servidor. Por eso la interfaz no tiene nada que construir ni dependencias que
@@ -110,6 +116,52 @@ Si pones `FROM 'fablab/#'` y republicas dentro de `fablab/...`, la regla se
 alimenta de su propia salida. Aquí lo evitamos a mano, pero **en AWS pasa de
 verdad**: una regla que se dispara con su propio mensaje, para siempre, y la
 factura la pagas tú. Es uno de los errores caros clásicos del Rules Engine.
+
+---
+
+## Si no arranca
+
+### «ports are not available … bind: Intento de acceso a un socket no permitido»
+
+Pasa en Windows y **no es culpa tuya ni del laboratorio**. Hyper-V se
+reserva bloques de unos 100 puertos al azar en cada arranque del sistema, y
+si le toca el que necesitas, Docker no puede abrirlo. El mensaje habla de
+permisos, que es justo lo que despista.
+
+Por eso este laboratorio **solo abre un puerto**, el 8080. Si aun así te
+toca ese, la salida más rápida es usar otro: crea un archivo `.env` en esta
+carpeta con una línea,
+
+```ini
+PUERTO_WEB=8081
+```
+
+vuelve a ejecutar `docker compose up` y entra por <http://localhost:8081>.
+No hay que tocar nada más: la interfaz se conecta al broker por el mismo
+puerto por el que la abriste.
+
+Si quieres confirmar que es eso, en una terminal **como administrador**:
+
+```powershell
+netsh interface ipv4 show excludedportrange protocol=tcp
+```
+
+Si tu puerto cae dentro de alguno de esos rangos, Windows lo tiene
+reservado. Liberarlos a mano (`net stop winnat` / `net start winnat`) suele
+funcionar, pero hay que repetirlo tras cada reinicio y a veces tumba la red
+de WSL. **Cambiar de puerto es más rápido y no rompe nada.**
+
+### «conectado al broker» no se pone en verde
+
+La interfaz carga pero se queda en «sin conexión». Mira los registros del
+broker:
+
+```bash
+docker compose logs broker
+```
+
+Si el contenedor `sim-broker` no arrancó, el resto no tiene con quién
+hablar.
 
 ---
 
