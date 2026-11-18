@@ -8,22 +8,15 @@ name: simulador-reglas
 # No necesita cuenta de AWS, no cuesta nada y se puede romper todas las
 # veces que haga falta. Es andamio para entender: lo que se construye de
 # verdad va en la consola, después.
-#
-# SOLO SE ABRE UN PUERTO EN TU MÁQUINA: el 8080.
-# El broker y el dispositivo se hablan por la red interna de Docker, y el
-# navegador llega al broker a través de la web, en la ruta /mqtt. Un puerto
-# que pueda chocar en vez de tres.
-#
-# ¿El 8080 también está ocupado? Crea un archivo .env aquí al lado con:
-#     PUERTO_WEB=8081
-# y entra por http://localhost:8081. No hay que tocar nada más.
 
 services:
   # El broker local. En AWS esto sería IoT Core.
-  # No publica puertos: nadie lo necesita desde fuera de Docker.
   broker:
     image: eclipse-mosquitto:2
     container_name: sim-broker
+    ports:
+      - "1883:1883"   # MQTT normal: para el dispositivo
+      - "9001:9001"   # MQTT sobre WebSockets: para el navegador
     volumes:
       - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
 
@@ -40,18 +33,15 @@ services:
       - broker
     restart: unless-stopped
 
-  # La interfaz, y el puente al broker (ver web.conf).
-  #
-  # El motor de reglas y las funciones corren en TU navegador, no en un
-  # servidor. Por eso aquí no hay nada que construir ni dependencias que
-  # instalar: son archivos estáticos.
+  # La interfaz. Son archivos estáticos: el motor de reglas y las funciones
+  # corren en TU navegador, no en un servidor. Por eso aquí no hay nada que
+  # construir ni ninguna dependencia que instalar.
   web:
     image: nginx:alpine
     container_name: sim-web
     ports:
-      - "${PUERTO_WEB:-8080}:80"
+      - "8080:80"
     volumes:
       - ./web:/usr/share/nginx/html:ro
-      - ./web.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - broker
