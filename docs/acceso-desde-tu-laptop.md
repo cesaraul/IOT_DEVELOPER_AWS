@@ -44,13 +44,7 @@ No se usa para trabajar, y mucho menos para que la use un programa.
 ## Paso 2 · Darle permisos
 
 En **Establecer permisos** → **Adjuntar políticas directamente**, busca y
-marca estas tres:
-
-| Política | Para qué |
-|---|---|
-| `AWSIoTDataAccess` | Hablar con tus dispositivos y sus shadows |
-| `AmazonDynamoDBReadOnlyAccess` | Leer la tabla de telemetría (clase 6) |
-| `AmazonS3ReadOnlyAccess` | Leer el histórico (clase 6) |
+marca **`AdministratorAccess`**.
 
 **Siguiente** → revisa → **Crear usuario**.
 
@@ -58,10 +52,24 @@ marca estas tres:
 > None»*. Este usuario **no puede entrar a la consola**, ni aunque quisieras.
 > Solo tendrá claves, para que las use un programa.
 
-> **Por qué solo lectura en DynamoDB y S3:** tus programas van a *consultar*
-> lo que la regla guardó. Quien escribe ahí es AWS, con su propio rol. Si tu
-> programa no necesita escribir, no le des permiso para escribir — el día que
-> tenga un fallo, el daño posible es mucho menor.
+> ### Esto es una decisión del curso, no una buena práctica
+>
+> `AdministratorAccess` permite **todo** en tu cuenta. Lo usamos aquí para
+> que ningún laboratorio se atasque por un permiso que no previmos: en un
+> aula, perder veinte minutos porque a alguien le falta una política no
+> enseña nada.
+>
+> Pero que quede claro lo que estás haciendo, porque en un trabajo real sería
+> un error grave: **le estás dando las llaves de toda la cuenta a un archivo
+> de texto que vive en tu laptop.** Si ese archivo se filtra, se filtra todo.
+>
+> En producción se hace al revés: se dan **los permisos mínimos** que el
+> programa necesita y se amplían cuando hace falta. Es lo que hicimos en la
+> clase 5 con la función Lambda, que solo podía publicar en un tema de SNS y
+> nada más. Compara las dos cosas: ese es el contraste que importa.
+>
+> Por eso el **paso 5 de esta guía —borrar la clave al terminar el curso— no
+> es opcional**.
 
 ## Paso 3 · Crear la clave de acceso
 
@@ -146,18 +154,23 @@ con sus claves.
 |---|---|
 | `faltan AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY` | El archivo se llama `.env.example` en vez de `.env`, o está en otra carpeta |
 | `UnrecognizedClientException` / `InvalidSignatureException` | La clave está incompleta al copiar, o la borraste en IAM |
-| `AccessDeniedException` | Falta una de las tres políticas del paso 2 |
+| `AccessDeniedException` | No se adjuntó la política del paso 2, o se adjuntó a otro usuario |
 | `boto3 no encontró tus claves` | Quedó un espacio o unas comillas en el `.env`. Va `CLAVE=valor`, sin comillas |
 
 ---
 
-## Al terminar el curso
+## Al terminar el curso — esto sí o sí
 
 Entra a **IAM → Usuarios → tu usuario → Credenciales de seguridad** y
-**elimina la clave de acceso**. No la desactives: bórrala.
+**elimina la clave de acceso**. No la desactives: **bórrala**.
 
-Una credencial que ya no usas y sigue viva es exactamente el tipo de cosa que
-alguien encuentra dos años después en un repositorio viejo.
+Y si no vas a seguir usando el usuario, bórralo también.
+
+Esa clave abre tu cuenta entera. Una credencial que ya no usas y sigue viva es
+exactamente el tipo de cosa que alguien encuentra dos años después en un
+repositorio viejo, en un USB o en una laptop que vendiste.
+
+**Dos minutos ahora, o una factura que no esperabas después.**
 
 > **Y una nota para cuando trabajes en serio:** las claves de larga duración
 > como estas son cómodas para aprender, pero en producción se evitan. Lo que
