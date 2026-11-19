@@ -134,7 +134,8 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 └── labs/
     ├── 02-protocolos/           HTTP y MQTT, con broker real
     ├── 03-iot-core/             Tu primer dispositivo en AWS
-    └── 04-device-shadow/        El gemelo digital
+    ├── 04-device-shadow/        El gemelo digital
+    └── 05-rules-engine/         Reglas, Lambda y alertas por correo
 ```
 
 ### Diapositivas
@@ -151,7 +152,7 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 | [02 · Protocolos IoT](labs/02-protocolos/) | HTTP y MQTT paso a paso, y un banco de pruebas en vivo con broker real |
 | [03 · AWS IoT Core](labs/03-iot-core/) | Crear tu dispositivo, conectarlo con certificado X.509 y publicar telemetría de verdad en AWS |
 | [04 · Device Shadow](labs/04-device-shadow/) | Controlar un equipo que puede estar apagado, y las dos identidades: certificado para el dispositivo, IAM para la aplicación |
-| [05 · Rules Engine](labs/05-rules-engine/simulador/) | Un simulador local para entender qué es una regla —armándola con bloques— antes de tocar la consola |
+| [05 · Rules Engine y Lambda](labs/05-rules-engine/) | Que los datos hagan algo solos: una regla que filtra, una Lambda que decide y un correo cuando el tanque se desborda. Trae un simulador local para entender la regla antes de tocar la consola |
 
 Cada laboratorio tiene su propio `README.md` con el paso a paso y un script
 `comprobar.py` que revisa que todo esté en su sitio antes de empezar. Si algo
