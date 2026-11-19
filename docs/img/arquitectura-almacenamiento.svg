@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" width="1000" height="540" role="img" aria-label="El dispositivo publica, dos reglas distintas miran los mismos mensajes: una guarda todo en DynamoDB y S3, la otra avisa solo de las alarmas.">
+<title>Almacenamiento</title>
+<desc>El dispositivo publica su telemetría en AWS IoT Core. Dos reglas distintas miran los mismos mensajes. La regla de hoy no tiene filtro y guarda cada mensaje en DynamoDB y en S3. La regla de la clase anterior filtra las alarmas y llama a la función que avisa por correo.</desc>
+
+<defs>
+<marker id="pAl" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#0D6E6E"/></marker>
+<marker id="pGris" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#B9C2CC"/></marker>
+</defs>
+
+<rect width="1000" height="540" fill="#FFFFFF"/>
+<text x="500" y="58" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#0D6E6E">Guardar lo que llega</text>
+
+<g font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" text-anchor="middle">
+
+<!-- Dispositivo -->
+<rect x="30" y="215" width="185" height="100" rx="14" fill="#D94F6E"/>
+<text x="122" y="262" font-size="24" font-weight="700" fill="#FFFFFF">Dispositivo</text>
+<text x="122" y="288" font-size="15" fill="#FFFFFF">publica igual que ayer</text>
+
+<!-- IoT Core -->
+<rect x="285" y="105" width="300" height="320" rx="16" fill="#E6F5F3" stroke="#0D6E6E" stroke-width="3"/>
+<text x="435" y="140" font-size="21" font-weight="600" fill="#0B5C5C">AWS IoT Core</text>
+
+<!-- regla de hoy -->
+<rect x="315" y="160" width="240" height="110" rx="12" fill="#FFFFFF" stroke="#0D6E6E" stroke-width="2.5"/>
+<text x="435" y="192" font-size="21" font-weight="700" fill="#0B5C5C">Regla: guardar</text>
+<text x="435" y="222" font-size="15" fill="#16202B">SELECT *</text>
+<text x="435" y="246" font-size="15" font-weight="700" fill="#D94F6E">sin WHERE</text>
+
+<!-- regla de ayer -->
+<rect x="315" y="295" width="240" height="105" rx="12" fill="#F6F7F9" stroke="#B9C2CC" stroke-width="2"/>
+<text x="435" y="326" font-size="19" font-weight="700" fill="#4A5663">Regla: avisar</text>
+<text x="435" y="352" font-size="15" fill="#4A5663">WHERE alarma = true</text>
+<text x="435" y="378" font-size="14" font-style="italic" fill="#4A5663">(la de la clase 5)</text>
+
+<!-- destinos -->
+<rect x="690" y="125" width="265" height="88" rx="14" fill="#0D6E6E"/>
+<text x="822" y="162" font-size="23" font-weight="700" fill="#FFFFFF">DynamoDB</text>
+<text x="822" y="189" font-size="15" fill="#CDEAE6">cómo está ahora</text>
+
+<rect x="690" y="235" width="265" height="88" rx="14" fill="#16202B"/>
+<text x="822" y="272" font-size="23" font-weight="700" fill="#FFFFFF">S3</text>
+<text x="822" y="299" font-size="15" fill="#8FD6D0">qué pasó, para siempre</text>
+
+<rect x="690" y="345" width="265" height="80" rx="14" fill="#F6F7F9" stroke="#B9C2CC" stroke-width="2"/>
+<text x="822" y="379" font-size="20" font-weight="700" fill="#4A5663">Lambda → correo</text>
+<text x="822" y="403" font-size="14" font-style="italic" fill="#4A5663">lo de la clase pasada</text>
+</g>
+
+<g stroke="#0D6E6E" stroke-width="3.5" fill="none" marker-end="url(#pAl)">
+<path d="M223 265 L 277 265"/>
+<path d="M589 200 L 630 200 L 630 169 L 682 169"/>
+<path d="M589 230 L 630 230 L 630 279 L 682 279"/>
+</g>
+<g stroke="#B9C2CC" stroke-width="3" fill="none" marker-end="url(#pGris)">
+<path d="M589 348 L 630 348 L 630 385 L 682 385"/>
+</g>
+
+<text x="500" y="474" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="24" fill="#4A5663">Dos reglas miran los mismos mensajes y no se estorban.</text>
+<text x="500" y="508" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="23" fill="#4A5663">La de avisar filtra. La de guardar, no: guardar todo es el trabajo.</text>
+</svg>

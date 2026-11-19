@@ -109,6 +109,8 @@ Dispositivo IoT  ──►  AWS IoT Core  ──►  Rules Engine + Lambda
   [guía de instalación paso a paso](docs/instalar-docker.md). Es la que usan
   los laboratorios; dedícale 20 minutos **antes** de la primera clase.
 - Cuenta de AWS activa (el curso se trabaja dentro del **Free Tier**).
+- A partir de la clase 4, un **usuario de IAM con sus claves** para que tus
+  programas entren a AWS → [guía paso a paso](docs/acceso-desde-tu-laptop.md).
 - Python 3.8 o superior instalado.
 - Git y un editor de código (se recomienda VS Code).
 
@@ -129,6 +131,7 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 ├── README.md                    Este archivo
 ├── docs/
 │   ├── instalar-docker.md       Prepara tu computadora (empieza aquí)
+│   ├── acceso-desde-tu-laptop.md  Tu usuario de IAM y sus claves
 │   ├── clases/                  Las diapositivas de cada clase
 │   └── img/                     Diagramas de las clases
 └── labs/
