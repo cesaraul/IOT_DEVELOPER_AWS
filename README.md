@@ -132,6 +132,7 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 ├── docs/
 │   ├── instalar-docker.md       Prepara tu computadora (empieza aquí)
 │   ├── acceso-desde-tu-laptop.md  Tu usuario de IAM y sus claves
+│   ├── con-ayuda-de-un-agente.md  Montarlo todo con Claude o ChatGPT
 │   ├── clases/                  Las diapositivas de cada clase
 │   └── img/                     Diagramas de las clases
 └── labs/
@@ -160,6 +161,12 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 Cada laboratorio tiene su propio `README.md` con el paso a paso y un script
 `comprobar.py` que revisa que todo esté en su sitio antes de empezar. Si algo
 falla, ejecútalo: te dice exactamente qué falta y cómo arreglarlo.
+
+> **¿Y hacerlo con un agente?** Cuando ya hayas hecho los laboratorios a
+> mano, [esta guía](docs/con-ayuda-de-un-agente.md) trae los prompts para
+> montarlo todo con Claude o ChatGPT desde la línea de comandos — y, sobre
+> todo, cómo comprobar que el agente no se equivocó. **Antes no: si no sabes
+> qué debería haber hecho, no vas a notar que lo hizo mal.**
 
 > **Los laboratorios 03 y 04 van encadenados.** El 04 reutiliza los
 > certificados y el `.env` del 03, así que hazlos en orden y no borres nada
