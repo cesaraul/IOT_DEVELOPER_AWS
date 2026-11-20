@@ -1,0 +1,353 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Laboratorio de IoT del curso IoT Developer con AWS (FabLab ESAN).
+  Crea de una vez todo lo que se construye a mano en las clases 3 a 6:
+  el objeto y su politica, las dos reglas, la funcion Lambda con su rol,
+  el tema de correo, la tabla y el bucket.
+  Lo unico que NO crea es el certificado del dispositivo: la llave privada
+  se entrega una sola vez y AWS no la guarda, asi que no hay forma de que
+  una plantilla la genere. Ese paso sigue siendo manual, y es la misma
+  leccion de seguridad de la clase 3.
+
+Parameters:
+
+  NombreObjeto:
+    Type: String
+    Default: mi-dispositivo
+    AllowedPattern: "[a-z0-9-]+"
+    Description: >-
+      Nombre de tu dispositivo, en minusculas y sin espacios (ej: cesar-01).
+      Se usa tambien como prefijo de la tabla y del bucket.
+
+  Correo:
+    Type: String
+    Description: >-
+      Tu correo, para las alarmas. Vas a recibir un mensaje de confirmacion
+      que TIENES que abrir: hasta entonces no llega ninguna alarma.
+
+  NivelDeAlarma:
+    Type: Number
+    Default: 90
+    Description: >-
+      A partir de que nivel la funcion manda el aviso.
+
+Resources:
+
+  # ---------------------------------------------------------------------
+  # EL DISPOSITIVO  (clases 3 y 4)
+  # ---------------------------------------------------------------------
+  # El certificado NO esta aqui, y no es un olvido: ver la descripcion de
+  # arriba. Se crea aparte y se adjunta a este objeto y a esta politica.
+
+  Objeto:
+    Type: AWS::IoT::Thing
+    Properties:
+      ThingName: !Ref NombreObjeto
+
+  PoliticaDispositivo:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyName: !Sub "${NombreObjeto}-politica"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # Conectarse solo con el nombre de su propio objeto. La variable
+          # la rellena AWS a partir del objeto al que esta adjunto el
+          # certificado: por eso una misma politica sirve para toda la clase.
+          - Sid: ConectarseSoloConSuPropioNombre
+            Effect: Allow
+            Action: iot:Connect
+            Resource: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:client/${!iot:Connection.Thing.ThingName}"
+
+          - Sid: PublicarEnLosTopicsDelCurso
+            Effect: Allow
+            Action: [iot:Publish, iot:Receive]
+            Resource: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/fablab/planta1/*"
+
+          - Sid: SuscribirseALosTopicsDelCurso
+            Effect: Allow
+            Action: iot:Subscribe
+            Resource: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/fablab/planta1/*"
+
+          # Los topics del shadow (clase 4). Empiezan por $aws y los impone
+          # AWS: por eso hay que nombrarlos aparte.
+          - Sid: UsarSuPropioShadow
+            Effect: Allow
+            Action: [iot:Publish, iot:Receive]
+            Resource: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/$aws/things/${!iot:Connection.Thing.ThingName}/shadow/*"
+
+          - Sid: EscucharLasRespuestasDeSuPropioShadow
+            Effect: Allow
+            Action: iot:Subscribe
+            Resource: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topicfilter/$aws/things/${!iot:Connection.Thing.ThingName}/shadow/*"
+
+  # ---------------------------------------------------------------------
+  # DONDE SE GUARDA  (clase 6)
+  # ---------------------------------------------------------------------
+
+  Tabla:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${NombreObjeto}-telemetria"
+      # Solo se declaran las claves. Las demas columnas aparecen solas con
+      # lo que traiga cada mensaje.
+      AttributeDefinitions:
+        - AttributeName: dispositivo
+          AttributeType: S
+        - AttributeName: momento
+          AttributeType: S
+      KeySchema:
+        - AttributeName: dispositivo
+          KeyType: HASH      # de quien es la fila
+        - AttributeName: momento
+          KeyType: RANGE     # cuando
+      # Aprovisionada, y con la capacidad minima: asi se queda dentro del
+      # Free Tier permanente (25 unidades). En modo bajo demanda se paga
+      # desde la primera escritura.
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${NombreObjeto}-telemetria-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ---------------------------------------------------------------------
+  # EL AVISO  (clase 5)
+  # ---------------------------------------------------------------------
+
+  TemaAlarmas:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${NombreObjeto}-alarmas"
+      DisplayName: Tanque FabLab
+
+  SuscripcionCorreo:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref TemaAlarmas
+      Protocol: email
+      Endpoint: !Ref Correo
+
+  RolFuncion:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${NombreObjeto}-rol-funcion"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        # Lo minimo: escribir sus propios registros.
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        # Y una sola cosa mas: avisar, en un solo tema.
+        - PolicyName: puede-avisar
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref TemaAlarmas
+
+  Funcion:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${NombreObjeto}-alarma"
+      Runtime: python3.13
+      # Con el codigo escrito aqui dentro, el archivo se llama index.py.
+      Handler: index.lambda_handler
+      Role: !GetAtt RolFuncion.Arn
+      Timeout: 10
+      Environment:
+        Variables:
+          TEMA_SNS: !Ref TemaAlarmas
+          NIVEL_DE_ALARMA: !Ref NivelDeAlarma
+      Code:
+        ZipFile: |
+          import json
+          import os
+
+          import boto3
+
+          sns = boto3.client("sns")
+          TEMA = os.environ["TEMA_SNS"]
+          LIMITE = float(os.environ.get("NIVEL_DE_ALARMA", 90))
+
+          # Vive entre ejecuciones: AWS reutiliza el mismo contenedor un
+          # rato. Es memoria fragil -- no sirve para nada serio -- pero
+          # alcanza para no mandar 300 correos, que es justo lo que la
+          # regla no sabia hacer.
+          avisado = False
+
+
+          def lambda_handler(event, context):
+              global avisado
+
+              print(json.dumps(event))
+
+              if float(event.get("nivel", 0)) < LIMITE:
+                  return
+
+              if avisado:
+                  print("ya avise, no repito")
+                  return
+
+              avisado = True
+              sns.publish(
+                  TopicArn=TEMA,
+                  Subject="Alarma en el tanque",
+                  Message=f"Nivel {event.get('nivel')} - temp {event.get('temp')}",
+              )
+              print("correo enviado")
+
+  # El permiso para que la regla pueda llamar a la funcion. Vive EN la
+  # funcion, no en la regla. Si se te olvida, la regla se ve perfecta y la
+  # funcion no se ejecuta nunca, sin un solo error en ninguna parte.
+  PermisoDeInvocacion:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt Funcion.Arn
+      Action: lambda:InvokeFunction
+      Principal: iot.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !GetAtt ReglaAlarmas.Arn
+
+  # ---------------------------------------------------------------------
+  # LAS DOS REGLAS
+  # ---------------------------------------------------------------------
+
+  RolReglaAlarmas:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${NombreObjeto}-rol-regla-alarmas"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: iot.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: puede-republicar
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: iot:Publish
+                Resource: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:topic/fablab/alarmas"
+
+  ReglaAlarmas:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: !Sub
+        - "${n}_alarmas"
+        - n: !Join ["_", !Split ["-", !Ref NombreObjeto]]
+      TopicRulePayload:
+        AwsIotSqlVersion: "2016-03-23"
+        RuleDisabled: false
+        Description: Avisa cuando el equipo levanta la bandera de alarma.
+        # Esta SI filtra: avisar de todo es ruido.
+        Sql: !Sub "SELECT nivel, temp FROM 'fablab/planta1/+/telemetria' WHERE alarma = true"
+        Actions:
+          - Republish:
+              Topic: fablab/alarmas
+              Qos: 0
+              RoleArn: !GetAtt RolReglaAlarmas.Arn
+          - Lambda:
+              FunctionArn: !GetAtt Funcion.Arn
+
+  RolReglaGuardar:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${NombreObjeto}-rol-regla-guardar"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: iot.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: puede-guardar
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Solo sobre TU tabla y TU bucket. Ni una mas.
+              - Effect: Allow
+                Action: dynamodb:PutItem
+                Resource: !GetAtt Tabla.Arn
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub "${Bucket.Arn}/*"
+
+  ReglaGuardar:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: !Sub
+        - "${n}_guardar"
+        - n: !Join ["_", !Split ["-", !Ref NombreObjeto]]
+      TopicRulePayload:
+        AwsIotSqlVersion: "2016-03-23"
+        RuleDisabled: false
+        Description: Guarda cada mensaje en la tabla y en el bucket.
+        # Esta NO lleva WHERE, y es a proposito: se filtra lo que se avisa,
+        # no lo que se guarda. El dato que descartas hoy no se recupera.
+        #
+        # topic(3) saca el nombre del equipo del propio topic, y parse_time
+        # convierte la hora del servidor en texto ordenable. Los dos son
+        # las claves de la tabla.
+        Sql: >-
+          SELECT *, topic(3) AS dispositivo,
+          parse_time("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timestamp()) AS momento
+          FROM 'fablab/planta1/+/telemetria'
+        Actions:
+          - DynamoDBv2:
+              PutItem:
+                TableName: !Ref Tabla
+              RoleArn: !GetAtt RolReglaGuardar.Arn
+          - S3:
+              BucketName: !Ref Bucket
+              Key: "${topic(3)}/${parse_time('yyyy/MM/dd', timestamp())}/${newuuid()}.json"
+              RoleArn: !GetAtt RolReglaGuardar.Arn
+
+Outputs:
+
+  Objeto:
+    Description: El nombre de tu dispositivo. Usalo como DISPOSITIVO_ID en el .env.
+    Value: !Ref NombreObjeto
+
+  Politica:
+    Description: Adjunta esta politica a tu certificado.
+    Value: !Ref PoliticaDispositivo
+
+  Tabla:
+    Description: La tabla donde se guarda la telemetria.
+    Value: !Ref Tabla
+
+  Bucket:
+    Description: El bucket del historico.
+    Value: !Ref Bucket
+
+  Tema:
+    Description: El tema de las alarmas. Confirma el correo que te llego.
+    Value: !Ref TemaAlarmas
+
+  SiguientePaso:
+    Description: Lo unico que falta, y que ninguna plantilla puede hacer por ti.
+    Value: !Sub >-
+      Crea el certificado y adjuntalo:
+      aws iot create-keys-and-certificate --set-as-active
+      --certificate-pem-outfile cert.pem --private-key-outfile private.key
+      ... y despues attach-policy y attach-thing-principal.
+      Tu endpoint: aws iot describe-endpoint --endpoint-type iot:Data-ATS

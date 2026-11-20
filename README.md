@@ -135,6 +135,8 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 │   ├── con-ayuda-de-un-agente.md  Montarlo todo con Claude o ChatGPT
 │   ├── clases/                  Las diapositivas de cada clase
 │   └── img/                     Diagramas de las clases
+├── infra/
+│   └── laboratorio.yaml        Todo el laboratorio en una plantilla
 └── labs/
     ├── 02-protocolos/           HTTP y MQTT, con broker real
     ├── 03-iot-core/             Tu primer dispositivo en AWS
@@ -161,6 +163,11 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 Cada laboratorio tiene su propio `README.md` con el paso a paso y un script
 `comprobar.py` que revisa que todo esté en su sitio antes de empezar. Si algo
 falla, ejecútalo: te dice exactamente qué falta y cómo arreglarlo.
+
+> **¿Te perdiste una clase, o quieres volver a empezar de cero?**
+> [`infra/laboratorio.yaml`](infra/) levanta todo lo de las clases 3 a 6 con
+> un comando — y lo borra con otro, que es lo que de verdad se agradece al
+> terminar el curso.
 
 > **¿Y hacerlo con un agente?** Cuando ya hayas hecho los laboratorios a
 > mano, [esta guía](docs/con-ayuda-de-un-agente.md) trae los prompts para
