@@ -136,6 +136,7 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 │   ├── clases/                  Las diapositivas de cada clase
 │   └── img/                     Diagramas de las clases
 ├── infra/
+│   ├── clase6.yaml             El almacenamiento, en cuatro recursos
 │   └── laboratorio.yaml        Todo el laboratorio en una plantilla
 └── labs/
     ├── 02-protocolos/           HTTP y MQTT, con broker real
@@ -159,6 +160,7 @@ El contenido se irá publicando por sesión a medida que avanza el curso.
 | [03 · AWS IoT Core](labs/03-iot-core/) | Crear tu dispositivo, conectarlo con certificado X.509 y publicar telemetría de verdad en AWS |
 | [04 · Device Shadow](labs/04-device-shadow/) | Controlar un equipo que puede estar apagado, y las dos identidades: certificado para el dispositivo, IAM para la aplicación |
 | [05 · Rules Engine y Lambda](labs/05-rules-engine/) | Que los datos hagan algo solos: una regla que filtra, una Lambda que decide y un correo cuando el tanque se desborda. Trae un simulador local para entender la regla antes de tocar la consola |
+| [06 · Almacenamiento](labs/06-almacenamiento/) | Que los datos queden guardados, en DynamoDB y en S3 — y montado **sin un solo clic**, con una plantilla de CloudFormation que se lee, se cambia y se borra entera |
 
 Cada laboratorio tiene su propio `README.md` con el paso a paso y un script
 `comprobar.py` que revisa que todo esté en su sitio antes de empezar. Si algo

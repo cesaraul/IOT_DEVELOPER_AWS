@@ -1,4 +1,7 @@
 # --- Credenciales y material sensible: NUNCA subir ---
+# Access keys de esta laptop. Siguen en disco para el AWS CLI; no entran al repo.
+CLI_AWS/
+
 *.pem
 *.key
 *.crt

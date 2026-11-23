@@ -1,0 +1,240 @@
+# =====================================================================
+#  CLASE 6 · El almacenamiento, en un archivo
+# =====================================================================
+#
+#  Esto es una PLANTILLA de CloudFormation. Describe en texto los cuatro
+#  recursos que hoy necesitamos, y AWS se encarga de crearlos.
+#
+#  Lee el archivo entero antes de desplegarlo. Son cuatro bloques y cada
+#  uno es algo que ya conoces: una tabla, un bucket, un permiso y una
+#  regla. Si algo aqui te suena a magia, para y preguntalo: el objetivo
+#  de hoy es justamente que no lo sea.
+#
+#  Desplegar:
+#    aws cloudformation deploy --template-file infra/clase6.yaml \
+#      --stack-name clase6 --capabilities CAPABILITY_NAMED_IAM \
+#      --region us-east-2 --parameter-overrides NombreObjeto=tu-dispositivo
+#
+#  Borrar todo:
+#    aws cloudformation delete-stack --stack-name clase6 --region us-east-2
+# =====================================================================
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Clase 6 - Almacenamiento. Crea la tabla de DynamoDB, el bucket de S3,
+  el rol que los autoriza y la regla de IoT que guarda cada mensaje.
+
+
+# ---------------------------------------------------------------------
+#  PARAMETERS - lo que cambia de una persona a otra
+# ---------------------------------------------------------------------
+#  Una plantilla sin parametros solo sirve para quien la escribio. Con
+#  ellos, los veinte de la clase despliegan el MISMO archivo y cada uno
+#  obtiene sus propios recursos.
+# ---------------------------------------------------------------------
+
+Parameters:
+
+  NombreObjeto:
+    Type: String
+    Default: mi-dispositivo
+    AllowedPattern: "[a-z0-9-]+"
+    ConstraintDescription: Solo minusculas, numeros y guiones.
+    Description: >-
+      El nombre de tu dispositivo, el mismo de las clases anteriores.
+      Se usa como prefijo de la tabla y del bucket.
+
+
+# ---------------------------------------------------------------------
+#  RESOURCES - lo que se crea
+# ---------------------------------------------------------------------
+#  Cada bloque tiene siempre la misma forma:
+#
+#      NombreQueLeDasTu:
+#        Type: AWS::Servicio::Recurso
+#        Properties:
+#          ...lo que ese recurso necesita...
+#
+#  El nombre de la izquierda es tuyo y solo existe dentro de la
+#  plantilla: sirve para que un recurso pueda referirse a otro.
+# ---------------------------------------------------------------------
+
+Resources:
+
+  # -------------------------------------------------------------------
+  #  1. LA TABLA  ·  "como esta ahora"
+  # -------------------------------------------------------------------
+  Tabla:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${NombreObjeto}-telemetria"
+
+      # Fijate en lo que NO esta aqui: ni "nivel" ni "temp".
+      #
+      # En una tabla de DynamoDB solo se declaran las columnas que forman
+      # la CLAVE. Las demas aparecen solas, con lo que traiga cada
+      # mensaje. Si manana el dispositivo empieza a mandar "presion",
+      # habra una columna "presion" y no hay que migrar nada.
+      AttributeDefinitions:
+        - AttributeName: dispositivo
+          AttributeType: S          # S = texto
+        - AttributeName: momento
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: dispositivo
+          KeyType: HASH             # clave de particion: DE QUIEN es la fila
+        - AttributeName: momento
+          KeyType: RANGE            # clave de ordenacion: CUANDO
+
+      # Modo aprovisionado con la capacidad minima.
+      #
+      # Importa: el Free Tier permanente de DynamoDB son 25 unidades de
+      # lectura y 25 de escritura, y SOLO aplica en este modo. Si creas
+      # la tabla "bajo demanda" -lo que la consola ofrece por defecto-
+      # se paga desde la primera escritura.
+      #
+      # 1 unidad de escritura = 1 escritura por segundo. Nuestro equipo
+      # publica cada 10 segundos: sobra.
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  # -------------------------------------------------------------------
+  #  2. EL BUCKET  ·  "que paso"
+  # -------------------------------------------------------------------
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      # Los nombres de bucket son unicos en TODO el mundo, no solo en tu
+      # cuenta. Por eso le pegamos el numero de cuenta detras: asi no
+      # choca con el de nadie.
+      BucketName: !Sub "${NombreObjeto}-telemetria-${AWS::AccountId}"
+
+      # Cerrado a cal y canto. Un bucket abierto por descuido es una de
+      # las formas mas comunes de filtrar datos en la nube.
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # -------------------------------------------------------------------
+  #  3. EL ROL  ·  con que permiso escribe la regla
+  # -------------------------------------------------------------------
+  #  Una regla no puede escribir en tu tabla porque si. Necesita una
+  #  identidad, igual que el dispositivo necesita su certificado.
+  #
+  #  Este es el tercer tipo de identidad del curso: un ROL, que es AWS
+  #  actuando en tu nombre.
+  # -------------------------------------------------------------------
+  RolRegla:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${NombreObjeto}-rol-guardar"
+
+      # Quien puede ponerse este rol. Solo el servicio de IoT.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: iot.amazonaws.com
+            Action: sts:AssumeRole
+
+      # Y que puede hacer con el puesto: escribir en TU tabla y en TU
+      # bucket. Ni en los de al lado, ni ninguna otra accion.
+      Policies:
+        - PolicyName: puede-guardar
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: dynamodb:PutItem
+                # !GetAtt saca un dato de otro recurso de esta misma
+                # plantilla. Aqui, el ARN de la tabla de arriba.
+                Resource: !GetAtt Tabla.Arn
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub "${Bucket.Arn}/*"
+
+  # -------------------------------------------------------------------
+  #  4. LA REGLA  ·  la que guarda
+  # -------------------------------------------------------------------
+  ReglaGuardar:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      # Los nombres de regla no admiten guiones, solo guion bajo. Por eso
+      # convertimos los guiones del nombre del objeto.
+      RuleName: !Sub
+        - "${n}_guardar"
+        - n: !Join ["_", !Split ["-", !Ref NombreObjeto]]
+
+      TopicRulePayload:
+        AwsIotSqlVersion: "2016-03-23"
+        RuleDisabled: false
+        Description: Guarda cada mensaje en la tabla y en el bucket.
+
+        # ESTA REGLA NO LLEVA "WHERE", Y ES A PROPOSITO.
+        #
+        # La de las alarmas filtraba, porque avisar de todo es ruido.
+        # Esta no filtra, porque guardar todo ES el trabajo. El dato que
+        # descartas hoy no se recupera manana.
+        #
+        # Y anade dos campos que el mensaje no traia:
+        #   topic(3)     saca el tercer nivel del topic, que es el nombre
+        #                del equipo:  fablab/planta1/[AQUI]/telemetria
+        #   parse_time   convierte la hora del servidor en un texto
+        #                ordenable, tipo 2026-11-23T10:05:31.002Z
+        #
+        # Esos dos son justamente las claves de la tabla. Sin ellos,
+        # DynamoDB rechazaria la fila por no saber donde ponerla.
+        Sql: >-
+          SELECT *, topic(3) AS dispositivo,
+          parse_time("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timestamp()) AS momento
+          FROM 'fablab/planta1/+/telemetria'
+
+        Actions:
+          # Una regla, dos destinos. El dispositivo publica UNA vez.
+          - DynamoDBv2:
+              # DynamoDBv2 escribe cada campo del mensaje en su propia
+              # columna. La version vieja metia todo el JSON en una sola,
+              # que es mucho menos util.
+              PutItem:
+                TableName: !Ref Tabla
+              RoleArn: !GetAtt RolRegla.Arn
+
+          - S3:
+              BucketName: !Ref Bucket
+              # El nombre del archivo se arma con los mismos datos del
+              # mensaje. Carpetas por equipo y por dia, que es como se
+              # organiza un historico para poder consultarlo despues.
+              Key: "${topic(3)}/${parse_time('yyyy/MM/dd', timestamp())}/${newuuid()}.json"
+              RoleArn: !GetAtt RolRegla.Arn
+
+
+# ---------------------------------------------------------------------
+#  OUTPUTS - lo que te devuelve al terminar
+# ---------------------------------------------------------------------
+#  Sin esto tendrias que ir a buscar los nombres a la consola. Con esto,
+#  la plantilla te los dice.
+# ---------------------------------------------------------------------
+
+Outputs:
+
+  Tabla:
+    Description: Ponlo en TABLA, en el .env del laboratorio.
+    Value: !Ref Tabla
+
+  Bucket:
+    Description: Ponlo en BUCKET, en el .env del laboratorio.
+    Value: !Ref Bucket
+
+  Regla:
+    Description: La regla que acaba de empezar a guardar.
+    Value: !Ref ReglaGuardar
+
+  Comprobar:
+    Description: Para ver si ya esta entrando algo.
+    Value: !Sub "aws dynamodb scan --table-name ${Tabla} --max-items 3"

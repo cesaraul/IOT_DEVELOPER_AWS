@@ -1,0 +1,22 @@
+name: lab-almacenamiento
+
+# Un solo servicio, y fíjate en lo que NO tiene: la carpeta de
+# certificados.
+#
+# Estos scripts no son el dispositivo. Son una aplicación que consulta lo
+# que quedó guardado, y entra a AWS con las claves de tu usuario de IAM.
+# El certificado aquí no pinta nada, así que no se lo damos.
+#
+#   docker compose run --rm app python comprobar.py
+#   docker compose run --rm app python consultar.py
+#   docker compose run --rm app python explorar.py
+
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      # El código, para que puedas editarlo y volver a ejecutar sin
+      # reconstruir la imagen.
+      - ./:/srv

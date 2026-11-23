@@ -1,0 +1,3 @@
+# El SDK de AWS. Aquí no hace falta paho-mqtt: no hablamos con ningún
+# dispositivo, solo consultamos lo que ya está guardado.
+boto3>=1.34,<2
