@@ -247,6 +247,33 @@ aws cloudformation deploy --template-file infra/clase6.yaml --stack-name clase6 
 Con `--no-execute-changeset` **no cambia nada**: te dice qué cambiaría y se
 para. Eso es un *conjunto de cambios*, y no existe en la consola a clics.
 
+```
+Changeset created successfully. Run the following command to review changes:
+aws cloudformation describe-change-set --change-set-name arn:aws:cloudformation:...
+```
+
+Copia ese comando y añádele `--output table` para leerlo:
+
+```
++--------+-------------------------+---------------+-------------+
+| Accion |        Propiedad        |    Recurso    |  Reemplazo  |
++--------+-------------------------+---------------+-------------+
+|  Modify|  ProvisionedThroughput  |  Tabla        |  False      |
+|  Modify|  TopicRulePayload       |  ReglaGuardar |  False      |
+|  Modify|  Policies               |  RolRegla     |  False      |
++--------+-------------------------+---------------+-------------+
+```
+
+**Mira la columna `Reemplazo`.** Es la más importante de las cuatro: `False`
+significa que AWS va a **modificar** el recurso que existe. Si pusiera
+`True`, lo borraría y crearía otro — y con una tabla, eso sería perderlo
+todo. Esa columna es la que revisas antes de aplicar un cambio en
+producción.
+
+> Verás tres recursos aunque solo tocaras uno. CloudFormation marca como
+> «modificados» los que vuelve a evaluar, aunque el resultado sea idéntico.
+> Lo que importa es que ninguno se reemplaza.
+
 > *«Mira qué va a cambiar antes de cambiarlo.»* El día que trabajes en una
 > infraestructura de verdad, eso es la diferencia entre una revisión y un
 > susto.
