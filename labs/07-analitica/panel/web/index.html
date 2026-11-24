@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de consulta · Clase 7</title>
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="barra">
+    <div>
+      <h1>Panel de consulta</h1>
+      <p class="sub">Esta página no sabe nada de AWS. Arma una dirección, la pide, y pinta lo que vuelve. Quien tiene los permisos es tu Lambda.</p>
+    </div>
+    <div class="zoom" title="Útil en proyector">
+      <span>Tamaño</span>
+      <button @click="ajustar(-10)">−</button>
+      <output>{{ tamano }} %</output>
+      <button @click="ajustar(10)">+</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ====================================================== la API -->
+    <div class="tarjeta">
+      <h2><span class="paso">0</span>La dirección de tu API</h2>
+      <p class="pista">
+        Es el <code>DireccionApi</code> que te devolvió la pila <code>clase7</code>.
+        Se guarda en este navegador; no viaja a ningún sitio.
+      </p>
+      <input type="text" class="ancho" v-model="base"
+             placeholder="https://xxxxxxxx.lambda-url.us-east-2.on.aws/">
+      <p class="nota" v-if="!base">
+        Si no la tienes a mano:
+        <code>aws cloudformation describe-stacks --stack-name clase7 --query "Stacks[0].Outputs" --profile curso</code>
+      </p>
+    </div>
+
+    <div class="rejilla">
+
+      <!-- ================================================ la pregunta -->
+      <section>
+
+        <div class="tarjeta">
+          <h2><span class="paso">1</span>¿Qué quieres saber?</h2>
+          <p class="pista">Fíjate en la etiqueta de cada una: no todas las contesta el mismo servicio.</p>
+
+          <label v-for="q in preguntas" :key="q.id" class="opcion"
+                 :class="{ puesta: e.accion === q.id }">
+            <input type="radio" :value="q.id" v-model="e.accion">
+            <div>
+              <div class="opcion-tit">
+                {{ q.titulo }}
+                <span class="fuente" :class="q.fuente.toLowerCase()">{{ q.fuente }}</span>
+              </div>
+              <div class="opcion-pie">{{ q.pie }}</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="tarjeta">
+          <h2><span class="paso">2</span>Los detalles</h2>
+          <p class="pista">Cada campo de aquí es un parámetro de la dirección. Nada más.</p>
+
+          <div class="fila">
+            <span class="etiqueta">Dispositivo</span>
+            <input type="text" v-model="e.dispositivo">
+            <span class="yaml-hint">clave de partición</span>
+          </div>
+
+          <div class="fila" v-if="campos.includes('desde')">
+            <span class="etiqueta">Desde</span>
+            <input type="datetime-local" v-model="e.desde">
+          </div>
+
+          <div class="fila" v-if="campos.includes('hasta')">
+            <span class="etiqueta">Hasta</span>
+            <input type="datetime-local" v-model="e.hasta">
+          </div>
+
+          <div class="fila" v-if="campos.includes('fecha')">
+            <span class="etiqueta">Qué día</span>
+            <input type="date" v-model="e.fecha">
+            <span class="yaml-hint">una carpeta del bucket</span>
+          </div>
+
+          <div class="fila" v-if="campos.includes('umbral')">
+            <span class="etiqueta">Umbral</span>
+            <input type="number" v-model.number="e.umbral" min="0" max="200">
+            <span class="yaml-hint">% de nivel</span>
+          </div>
+
+          <div class="fila" v-if="campos.includes('n')">
+            <span class="etiqueta">Máximo de filas</span>
+            <input type="number" v-model.number="e.n" min="1" max="500">
+          </div>
+
+          <p class="nota" v-if="campos.includes('desde')">
+            El dato guardado está en <strong>UTC</strong>, porque la hora la pone el
+            servidor. Lo que escribes aquí es tu hora local y el panel lo convierte:
+            por eso en la dirección verás otra.
+          </p>
+        </div>
+
+        <div class="tarjeta">
+          <button class="btn btn-primario" @click="preguntar" :disabled="pidiendo || !base">
+            {{ pidiendo ? "Preguntando…" : "Preguntar" }}
+          </button>
+          <p class="nota">
+            Se va a abrir una conexión HTTPS desde tu navegador hasta tu Lambda.
+            Lo mismo que haría cualquier aplicación.
+          </p>
+        </div>
+
+      </section>
+
+      <!-- ================================================ la respuesta -->
+      <section>
+
+        <div class="tarjeta">
+          <h2>La dirección que se va a pedir</h2>
+          <p class="pista">Esto es todo lo que esta página le dice a AWS.</p>
+
+          <pre class="url" v-if="url"><span class="base">{{ base.replace(/\/+$/, '') }}/?</span><span
+            v-for="(p, i) in partes" :key="p[0]">
+<span class="par">{{ i ? '&amp;' : '' }}{{ p[0] }}=</span><span class="val">{{ p[1] }}</span><span class="c">   # {{ p[2] }}</span></span></pre>
+          <p class="nota" v-else>Pega arriba la dirección de tu API y aparecerá aquí.</p>
+
+          <details class="plegado" v-if="url">
+            <summary>▸ Lo mismo, desde la terminal</summary>
+            <div class="contenido">
+              <pre class="comando">{{ curl }}</pre>
+              <p class="nota">
+                Si esto funciona y el panel no, el problema está en el navegador
+                (CORS), no en la Lambda. Buen reflejo para tener.
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <!-- el error, tal como lo manda la función -->
+        <div class="tarjeta" v-if="error">
+          <h2>No salió</h2>
+          <pre class="fallo">{{ error }}</pre>
+          <p class="nota">
+            Si dice <code>AccessDenied</code>, el rol de la Lambda no tiene ese
+            permiso: se arregla en la plantilla, no aquí. Si dice
+            <code>ValidationException</code>, la pregunta no encaja con las claves
+            de la tabla.
+          </p>
+        </div>
+
+        <!-- quién contestó y cuánto tardó -->
+        <div class="tarjeta" v-if="respuesta">
+          <h2>Quién contestó</h2>
+          <div class="medidas">
+            <div class="medida">
+              <div class="medida-n">{{ loQuePregunte === 'dia' ? 'S3' : 'DynamoDB' }}</div>
+              <div class="medida-t">el servicio que buscó</div>
+            </div>
+            <div class="medida">
+              <div class="medida-n">{{ ms }} ms</div>
+              <div class="medida-t">de ida y vuelta</div>
+            </div>
+            <div class="medida" v-if="respuesta.archivos !== undefined">
+              <div class="medida-n">{{ respuesta.archivos }}</div>
+              <div class="medida-t">archivos en esa carpeta</div>
+            </div>
+            <div class="medida" v-else>
+              <div class="medida-n">{{ filas.length }}</div>
+              <div class="medida-t">filas devueltas</div>
+            </div>
+          </div>
+
+          <p class="nota" v-if="loQuePregunte === 'dia'">
+            Esto tarda más, y no es un defecto: S3 ha tenido que
+            <strong>listar</strong> la carpeta y luego <strong>abrir</strong> un
+            archivo por lectura. Era el almacén barato, no el rápido. Compara el
+            número con el de la primera pregunta.
+          </p>
+        </div>
+
+        <!-- el resumen -->
+        <div class="tarjeta" v-if="resumen">
+          <h2>El resumen</h2>
+          <p class="pista">
+            Esto no está guardado en ninguna parte: lo calculó la Lambda con las
+            filas que leyó, y se perderá al cerrar. Es una conclusión, no un dato.
+          </p>
+          <div class="medidas" v-if="resumen.cuantas">
+            <div class="medida"><div class="medida-n">{{ resumen.maximo }}</div><div class="medida-t">máximo</div></div>
+            <div class="medida"><div class="medida-n">{{ resumen.minimo }}</div><div class="medida-t">mínimo</div></div>
+            <div class="medida"><div class="medida-n">{{ resumen.media }}</div><div class="medida-t">media</div></div>
+            <div class="medida" :class="{ alto: resumen.sobre_umbral > 0 }">
+              <div class="medida-n">{{ resumen.sobre_umbral }}</div>
+              <div class="medida-t">por encima de {{ resumen.umbral }}</div>
+            </div>
+          </div>
+          <p class="nota" v-else>No hubo ninguna lectura en esa ventana.</p>
+        </div>
+
+        <!-- el gráfico -->
+        <div class="tarjeta" v-if="grafico">
+          <h2>El nivel, en el tiempo</h2>
+          <svg class="grafico" :viewBox="'0 0 ' + grafico.ancho + ' ' + grafico.alto">
+            <line v-if="yUmbral" class="umbral"
+                  x1="0" :x2="grafico.ancho" :y1="yUmbral" :y2="yUmbral"></line>
+            <polyline class="serie" :points="grafico.linea"></polyline>
+          </svg>
+          <div class="ejes">
+            <span>{{ hora(grafico.desde) }}</span>
+            <span class="suave">{{ grafico.min }} – {{ grafico.max }} %</span>
+            <span>{{ hora(grafico.hasta) }}</span>
+          </div>
+          <p class="nota" v-if="loQuePregunte === 'dia'">
+            Estas lecturas venían <strong>desordenadas</strong>: S3 entrega archivos
+            con nombre al azar, no una serie. El panel las ordenó por
+            <code>momento</code> después de recibirlas. DynamoDB se las da ya
+            ordenadas — para eso existe la clave de ordenación.
+          </p>
+        </div>
+
+        <!-- la tabla -->
+        <div class="tarjeta" v-if="filas.length">
+          <h2>Lo que llegó</h2>
+          <p class="pista">
+            Ninguna de estas columnas está declarada en la plantilla, salvo las dos
+            claves. Aparecieron porque el dispositivo las mandó.
+          </p>
+          <div class="desliza">
+            <table>
+              <thead>
+                <tr><th v-for="c in columnas" :key="c">{{ c }}</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="(f, i) in filas" :key="i">
+                  <td v-for="c in columnas" :key="c">{{ corto(f[c]) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="vendor/vue.global.prod.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

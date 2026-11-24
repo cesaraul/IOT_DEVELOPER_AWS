@@ -1,0 +1,264 @@
+# =====================================================================
+#  CLASE 7 · Preguntar y ver
+# =====================================================================
+#
+#  Dos cosas, y responden preguntas distintas:
+#
+#  1. Una Lambda que hace de API. Le preguntas por HTTPS y te contesta
+#     con los datos que guardó la clase 6. El panel del laboratorio la
+#     llama; tú escribes lo que sabe responder.
+#
+#  2. Una regla que convierte el nivel en una metrica de CloudWatch,
+#     para verlo como una curva sin programar nada.
+#
+#  Lo primero lo construyes tu. Lo segundo ya venia hecho. Ese contraste
+#  es el contenido de la clase.
+#
+#  Requiere la pila clase6 desplegada: lee SU tabla y SU bucket.
+#
+#  Desplegar:
+#    aws cloudformation deploy --template-file infra/clase7.yaml \
+#      --stack-name clase7 --capabilities CAPABILITY_NAMED_IAM \
+#      --region us-east-2 --profile curso \
+#      --parameter-overrides NombreObjeto=demo-clase3
+#
+#  Borrar:
+#    aws cloudformation delete-stack --stack-name clase7 --profile curso
+# =====================================================================
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Clase 7 - La API de consulta (Lambda + Function URL) y la metrica de
+  CloudWatch. Lee la tabla y el bucket que creo la clase 6.
+
+Parameters:
+
+  NombreObjeto:
+    Type: String
+    Default: demo-clase3
+    AllowedPattern: "[a-z0-9-]+"
+    Description: El mismo que usaste en la clase 6.
+
+Resources:
+
+  # -------------------------------------------------------------------
+  #  1. EL PERMISO DE LA API
+  # -------------------------------------------------------------------
+  #  Solo LEER. Esta funcion consulta; quien escribe es la regla, con su
+  #  propio rol. Si manana tuviera un fallo, lo peor que podria hacer es
+  #  ensenar datos que ya son tuyos.
+  # -------------------------------------------------------------------
+  RolApi:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${NombreObjeto}-rol-api"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: puede-leer
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Query
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${NombreObjeto}-telemetria"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${NombreObjeto}-telemetria-${AWS::AccountId}"
+                  - !Sub "arn:aws:s3:::${NombreObjeto}-telemetria-${AWS::AccountId}/*"
+
+  # -------------------------------------------------------------------
+  #  2. LA API
+  # -------------------------------------------------------------------
+  Api:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${NombreObjeto}-api"
+      Runtime: python3.13
+      Handler: index.lambda_handler
+      Role: !GetAtt RolApi.Arn
+      Timeout: 20
+      MemorySize: 256
+      Environment:
+        Variables:
+          TABLA: !Sub "${NombreObjeto}-telemetria"
+          BUCKET: !Sub "${NombreObjeto}-telemetria-${AWS::AccountId}"
+      Code:
+        ZipFile: |
+          import json, os
+          from decimal import Decimal
+          import boto3
+          from boto3.dynamodb.conditions import Key
+
+          tabla = boto3.resource("dynamodb").Table(os.environ["TABLA"])
+          s3 = boto3.client("s3")
+          BUCKET = os.environ["BUCKET"]
+
+          CABECERAS = {"Content-Type": "application/json",
+                       "Access-Control-Allow-Origin": "*"}
+
+          def limpiar(x):
+              # DynamoDB devuelve Decimal para no perder precision; JSON
+              # no sabe serializarlo.
+              if isinstance(x, list):  return [limpiar(i) for i in x]
+              if isinstance(x, dict):  return {k: limpiar(v) for k, v in x.items()}
+              if isinstance(x, Decimal): return float(x)
+              return x
+
+          def filas(disp, desde, hasta, tope):
+              cond = Key("dispositivo").eq(disp)
+              if desde and hasta:
+                  cond = cond & Key("momento").between(desde, hasta)
+              r = tabla.query(KeyConditionExpression=cond,
+                              ScanIndexForward=bool(desde),
+                              Limit=tope)
+              return limpiar(r["Items"])
+
+          def resumen(f, umbral):
+              niveles = [x["nivel"] for x in f if "nivel" in x]
+              if not niveles:
+                  return {"cuantas": 0}
+              pasadas = len([n for n in niveles if n > umbral])
+              return {"cuantas": len(f),
+                      "maximo": max(niveles),
+                      "minimo": min(niveles),
+                      "media": round(sum(niveles) / len(niveles), 2),
+                      "sobre_umbral": pasadas,
+                      "umbral": umbral}
+
+          def lambda_handler(event, context):
+              p = event.get("queryStringParameters") or {}
+              accion = p.get("accion", "ultimas")
+              disp = p.get("dispositivo", "")
+              try:
+                  if accion == "dia":
+                      # El histórico: S3 solo sabe listar y entregar.
+                      pref = f"{disp}/{p.get('fecha','')}/"
+                      r = s3.list_objects_v2(Bucket=BUCKET, Prefix=pref, MaxKeys=200)
+                      claves = [o["Key"] for o in r.get("Contents", [])]
+                      datos = []
+                      for k in claves[:50]:
+                          cuerpo = s3.get_object(Bucket=BUCKET, Key=k)["Body"].read()
+                          datos.append(json.loads(cuerpo))
+                      cuerpo = {"archivos": len(claves), "leidos": len(datos),
+                                "datos": datos}
+                  else:
+                      f = filas(disp, p.get("desde"), p.get("hasta"),
+                                int(p.get("n", 50)))
+                      cuerpo = {"filas": f}
+                      if accion == "resumen":
+                          cuerpo = {"resumen": resumen(f, float(p.get("umbral", 90))),
+                                    "filas": f}
+                  return {"statusCode": 200, "headers": CABECERAS,
+                          "body": json.dumps(cuerpo)}
+              except Exception as e:
+                  return {"statusCode": 500, "headers": CABECERAS,
+                          "body": json.dumps({"error": f"{type(e).__name__}: {e}"})}
+
+  # Una direccion HTTPS para la funcion, sin API Gateway de por medio.
+  UrlApi:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt Api.Arn
+      # Sin autenticacion: cualquiera con la direccion puede llamarla.
+      # Para una clase vale; en produccion jamas. Por eso el README
+      # insiste en borrar la pila al terminar.
+      AuthType: NONE
+      Cors:
+        AllowOrigins: ["*"]
+        AllowMethods: ["GET"]
+
+  # Hacen falta DOS permisos, y esto es historia reciente: desde octubre
+  # de 2025, una Function URL nueva exige ademas lambda:InvokeFunction.
+  # Las creadas antes siguen funcionando con uno solo, asi que casi todos
+  # los ejemplos que encontraras por internet traen solo el primero y dan
+  # un 403 con un mensaje que, por una vez, dice exactamente lo que falta.
+  PermisoUrl:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Api
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      # La condicion acota el permiso a las llamadas que entran por la
+      # URL sin autenticar. No se puede poner en el de abajo: la API de
+      # Lambda solo la admite junto a InvokeFunctionUrl.
+      FunctionUrlAuthType: NONE
+
+  PermisoInvocar:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Api
+      Action: lambda:InvokeFunction
+      Principal: "*"
+
+  # -------------------------------------------------------------------
+  #  3. LA METRICA  ·  lo que ya venia hecho
+  # -------------------------------------------------------------------
+  RolMetrica:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${NombreObjeto}-rol-metrica"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: iot.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: puede-medir
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+
+  ReglaMetrica:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: !Sub
+        - "${n}_metricas"
+        - n: !Join ["_", !Split ["-", !Ref NombreObjeto]]
+      TopicRulePayload:
+        AwsIotSqlVersion: "2016-03-23"
+        RuleDisabled: false
+        Description: Convierte el nivel en una metrica de CloudWatch.
+        Sql: "SELECT * FROM 'fablab/planta1/+/telemetria'"
+        Actions:
+          - CloudwatchMetric:
+              MetricNamespace: FabLab/Tanques
+              # ${...} aqui NO es de CloudFormation: son plantillas de
+              # sustitucion de la regla, que se rellenan con el mensaje.
+              MetricName: "${topic(3)}-nivel"
+              MetricValue: "${nivel}"
+              MetricUnit: "None"
+              RoleArn: !GetAtt RolMetrica.Arn
+
+Outputs:
+
+  DireccionApi:
+    Description: Pegala en el panel del laboratorio 07.
+    Value: !GetAtt UrlApi.FunctionUrl
+
+  Metrica:
+    Description: Busca este espacio de nombres en CloudWatch - Metricas.
+    Value: FabLab/Tanques
+
+  Probar:
+    Description: Para ver que la API responde, sin salir de la terminal.
+    Value: !Sub
+      - "curl '${u}?accion=resumen&dispositivo=${NombreObjeto}'"
+      - u: !GetAtt UrlApi.FunctionUrl

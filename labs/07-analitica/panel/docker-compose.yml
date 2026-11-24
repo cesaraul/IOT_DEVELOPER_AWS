@@ -1,0 +1,26 @@
+name: panel-consulta
+
+# El panel de la clase 7.
+#
+#   docker compose up
+#   y abre  http://localhost:8082
+#
+# Va en el 8082 porque el 8080 lo usa el simulador de reglas (clase 5) y
+# el 8081 el constructor de plantillas (clase 6): puedes tener los tres
+# abiertos. Si el 8082 estuviera ocupado, cambia el primer número de la
+# línea "ports" y entra por ese.
+#
+# Fíjate en lo que NO hay aquí: ni credenciales, ni variables de AWS, ni
+# un Dockerfile. Es un servidor de archivos estáticos y nada más. Todo
+# el trabajo lo hace tu Lambda, al otro lado de la dirección que pegues
+# en la página.
+
+services:
+  panel:
+    image: nginx:alpine
+    container_name: panel-clase7
+    ports:
+      - "8082:80"
+    volumes:
+      # Solo lectura: esta herramienta no escribe nada en tu disco.
+      - ./web:/usr/share/nginx/html:ro
