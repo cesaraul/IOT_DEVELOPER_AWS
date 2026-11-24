@@ -1,0 +1,158 @@
+/* Constructor de plantillas. Pensado para proyector: letra grande. */
+
+:root {
+  --fondo: #f6f7f9;
+  --papel: #ffffff;
+  --borde: #d9dde3;
+  --texto: #1b1f24;
+  --suave: #5c6672;
+  --mqtt: #0d6e6e;
+  --mqtt-claro: #e6f5f4;
+  --acento: #d94f6e;
+  --ok: #15803d;
+  --ok-claro: #e8f7ee;
+  --aviso: #b45309;
+  --aviso-claro: #fff6e8;
+  --grave: #b91c1c;
+  --grave-claro: #fdecec;
+  --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #14171b; --papel: #1c2026; --borde: #313841;
+    --texto: #e8ebee; --suave: #9aa5b1; --mqtt: #4dd4c7;
+    --mqtt-claro: #122524; --acento: #f2819a; --ok: #4ade80;
+    --ok-claro: #11261a; --aviso: #fbbf24; --aviso-claro: #2a2114;
+    --grave: #f87171; --grave-claro: #2a1515;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; background: var(--fondo); color: var(--texto);
+  font: 17px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main { width: 100%; padding: 0 22px 60px; }
+
+.barra {
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+  justify-content: space-between; padding: 16px 22px;
+  background: var(--papel); border-bottom: 1px solid var(--borde);
+}
+.barra h1 { margin: 0; font-size: 25px; }
+.barra .sub { margin: 2px 0 0; color: var(--suave); font-size: 15px; }
+
+.zoom { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--suave); }
+.zoom button {
+  width: 32px; height: 32px; font-size: 19px; line-height: 1;
+  border: 1px solid var(--borde); background: var(--papel);
+  color: var(--texto); border-radius: 8px; cursor: pointer;
+}
+
+.rejilla {
+  display: grid; grid-template-columns: minmax(380px, 1fr) minmax(520px, 1.15fr);
+  gap: 22px; margin-top: 22px;
+}
+@media (max-width: 1100px) { .rejilla { grid-template-columns: 1fr; } }
+
+.tarjeta {
+  background: var(--papel); border: 1px solid var(--borde);
+  border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;
+}
+.tarjeta h2 { margin: 0 0 3px; font-size: 19px; }
+.tarjeta .pista { margin: 0 0 14px; color: var(--suave); font-size: 14px; }
+
+.paso {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--mqtt); color: #fff; font-size: 15px; font-weight: 700;
+  margin-right: 9px;
+}
+
+.docs {
+  float: right; font-size: 13px; color: var(--mqtt); text-decoration: none;
+  border: 1px solid var(--borde); border-radius: 999px; padding: 3px 11px;
+}
+.docs:hover { border-color: var(--mqtt); }
+
+.fila { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+.etiqueta { font-size: 14px; color: var(--suave); min-width: 132px; }
+.yaml-hint { font-family: var(--mono); font-size: 12px; color: var(--mqtt); }
+
+input[type="text"], select {
+  font: inherit; font-size: 16px; padding: 7px 10px;
+  border: 1px solid var(--borde); border-radius: 9px;
+  background: var(--fondo); color: var(--texto);
+}
+input[type="text"] { min-width: 170px; }
+
+.chip {
+  border: 2px solid var(--borde); background: var(--papel); color: var(--texto);
+  padding: 6px 13px; border-radius: 999px; font-size: 15px; cursor: pointer;
+  font-family: var(--mono);
+}
+.chip.puesto { border-color: var(--mqtt); background: var(--mqtt-claro); color: var(--mqtt); font-weight: 700; }
+
+.interruptor { display: flex; align-items: center; gap: 9px; font-size: 16px; cursor: pointer; }
+
+/* ------------------------------------------------------------- plegado */
+
+.plegado summary {
+  cursor: pointer; font-size: 16px; font-weight: 600; color: var(--suave);
+  padding: 4px 0;
+}
+.plegado .contenido {
+  border-left: 3px solid var(--borde); padding: 10px 0 2px 14px; margin-top: 10px;
+}
+.fijo { opacity: .62; }
+.fijo li { font-family: var(--mono); font-size: 14px; margin: 3px 0; }
+
+/* ---------------------------------------------------------------- yaml */
+
+.yaml {
+  font-family: var(--mono); font-size: 13.5px; line-height: 1.55;
+  white-space: pre; overflow-x: auto; max-height: 560px; overflow-y: auto;
+  background: #0f1720; color: #d7e3ee; border-radius: 12px; padding: 16px;
+  margin: 0;
+}
+.yaml .c { color: #6b8299; }          /* comentarios */
+.yaml .k { color: #6fd6c6; }          /* claves */
+.yaml .f { color: #f2a65a; }          /* funciones !Ref !GetAtt !Sub */
+.yaml .s { color: #c8e6a0; }          /* textos */
+
+/* -------------------------------------------------------------- avisos */
+
+.aviso {
+  border-radius: 10px; padding: 11px 14px; margin-bottom: 10px; font-size: 15px;
+  border-left: 4px solid;
+}
+.aviso.grave { background: var(--grave-claro); border-color: var(--grave); }
+.aviso.ojo   { background: var(--aviso-claro); border-color: var(--aviso); }
+.aviso.bien  { background: var(--ok-claro);    border-color: var(--ok); }
+
+/* ------------------------------------------------------------- guardar */
+
+.btn {
+  border: 1px solid var(--borde); background: var(--papel); color: var(--texto);
+  padding: 10px 18px; border-radius: 10px; font-size: 16px; cursor: pointer;
+}
+.btn-primario {
+  background: var(--mqtt); border-color: var(--mqtt); color: #fff; font-weight: 600;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.comando {
+  font-family: var(--mono); font-size: 14px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-all;
+  background: #0f1720; color: #d7e3ee; border-radius: 10px;
+  padding: 14px; margin: 12px 0 0;
+}
+.guardado {
+  background: var(--ok-claro); border-left: 4px solid var(--ok);
+  border-radius: 10px; padding: 12px 14px; margin-top: 12px; font-size: 15px;
+}
+.ruta { font-family: var(--mono); font-weight: 700; }
+.nota { font-size: 14px; color: var(--suave); margin-top: 10px; }

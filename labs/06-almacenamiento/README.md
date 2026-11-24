@@ -63,7 +63,35 @@ A partir de ahí, a cada comando de este laboratorio le añades
 
 ---
 
-## Paso 1 · Leer la plantilla antes de ejecutarla
+## Paso 1 · Armarla tú, con el constructor
+
+Antes de leer la plantilla terminada, **constrúyela**:
+
+```bash
+cd constructor
+```
+
+```bash
+docker compose up
+```
+
+Y abre <http://localhost:8081>.
+
+Eliges a la izquierda —el nombre, las claves, los destinos, la regla— y el
+YAML se escribe a la derecha, línea a línea. Cada bloque trae el enlace a la
+documentación del recurso que genera, y la herramienta te avisa cuando las
+piezas **dejan de encajar entre sí**: si quitas el campo que la tabla usa
+como clave, te lo dice en el momento.
+
+Al final, el botón **Guardar plantilla** escribe tu archivo en
+`mi-clase6.yaml` y te da el comando para desplegarlo. Está explicado en
+[`constructor/README.md`](constructor/).
+
+> Lo que sigue usa `infra/clase6.yaml`, la versión de referencia. Si
+> desplegaste la tuya, cambia el nombre del archivo en los comandos — el
+> resto es idéntico.
+
+## Paso 2 · Leer la plantilla antes de ejecutarla
 
 Abre [`infra/clase6.yaml`](../../infra/clase6.yaml). **Léela entera antes de
 desplegar nada.** Son cuatro recursos y cabe en una pantalla.

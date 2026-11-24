@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constructor de plantillas · Clase 6</title>
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="barra">
+    <div>
+      <h1>Constructor de plantillas</h1>
+      <p class="sub">Elige a la izquierda y mira cómo se escribe el YAML a la derecha. Lo que salga es un archivo real: AWS lo acepta tal cual.</p>
+    </div>
+    <div class="zoom" title="Útil en proyector">
+      <span>Tamaño</span>
+      <button @click="ajustar(-10)">−</button>
+      <output>{{ tamano }} %</output>
+      <button @click="ajustar(10)">+</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="rejilla">
+
+      <!-- ===================================== columna de decisiones -->
+      <section>
+
+        <!-- lo que ya existe -->
+        <div class="tarjeta">
+          <details class="plegado">
+            <summary>▸ Lo que ya existe en tu cuenta (clases 3 a 5)</summary>
+            <div class="contenido fijo">
+              <ul>
+                <li>AWS::IoT::Thing — tu dispositivo</li>
+                <li>AWS::IoT::Policy — su política, con los topics del shadow</li>
+                <li>AWS::IoT::TopicRule — la regla de alarmas</li>
+                <li>AWS::Lambda::Function — la que avisa</li>
+                <li>AWS::SNS::Topic — el tema de correo</li>
+              </ul>
+              <p class="nota">
+                Está aquí para que veas el conjunto, pero <b>no entra en la
+                plantilla de hoy</b>: ya existe, creado a mano. Una plantilla
+                describe lo que <i>ella</i> gestiona — si metieras aquí algo que
+                ya está creado, el despliegue fallaría diciendo justamente eso.
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <!-- 1 -->
+        <div class="tarjeta">
+          <a class="docs" :href="docs('AWS::CloudFormation::Stack')" target="_blank" rel="noopener">documentación ↗</a>
+          <h2><span class="paso">1</span>Tu dispositivo</h2>
+          <p class="pista">El mismo nombre de las clases anteriores. Se usa como prefijo de todo.</p>
+          <div class="fila">
+            <span class="etiqueta">Nombre</span>
+            <input type="text" v-model="e.nombre">
+            <span class="yaml-hint">→ Parameters.NombreObjeto.Default</span>
+          </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="tarjeta" v-if="e.aDynamo">
+          <a class="docs" :href="docs('AWS::DynamoDB::Table')" target="_blank" rel="noopener">documentación ↗</a>
+          <h2><span class="paso">2</span>La tabla</h2>
+          <p class="pista">Solo se declaran las columnas que forman la clave. Las demás aparecen solas.</p>
+
+          <div class="fila">
+            <span class="etiqueta">Clave de partición</span>
+            <input type="text" v-model="e.clavePart" style="min-width:140px">
+            <select v-model="e.tipoPart">
+              <option value="S">texto</option>
+              <option value="N">número</option>
+            </select>
+            <span class="yaml-hint">→ KeySchema · HASH</span>
+          </div>
+
+          <div class="fila">
+            <span class="etiqueta">Clave de ordenación</span>
+            <input type="text" v-model="e.claveOrden" style="min-width:140px">
+            <select v-model="e.tipoOrden">
+              <option value="S">texto</option>
+              <option value="N">número</option>
+            </select>
+            <span class="yaml-hint">→ KeySchema · RANGE</span>
+          </div>
+
+          <div class="fila">
+            <span class="etiqueta">Capacidad</span>
+            <button class="chip" :class="{ puesto: e.capacidad === 'aprovisionada' }"
+                    @click="e.capacidad = 'aprovisionada'">aprovisionada</button>
+            <button class="chip" :class="{ puesto: e.capacidad === 'bajo-demanda' }"
+                    @click="e.capacidad = 'bajo-demanda'">bajo demanda</button>
+            <span class="yaml-hint">→ ProvisionedThroughput</span>
+          </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="tarjeta">
+          <a class="docs" :href="docs('AWS::S3::Bucket')" target="_blank" rel="noopener">documentación ↗</a>
+          <h2><span class="paso">3</span>Dónde guardar</h2>
+          <p class="pista">Cada destino que marcas añade una acción a la regla y un permiso al rol.</p>
+          <div class="fila">
+            <label class="interruptor"><input type="checkbox" v-model="e.aDynamo"> DynamoDB <span class="yaml-hint">— cómo está ahora</span></label>
+          </div>
+          <div class="fila">
+            <label class="interruptor"><input type="checkbox" v-model="e.aS3"> S3 <span class="yaml-hint">— qué pasó</span></label>
+          </div>
+        </div>
+
+        <!-- 4 -->
+        <div class="tarjeta">
+          <a class="docs" :href="docs('AWS::IoT::TopicRule')" target="_blank" rel="noopener">documentación ↗</a>
+          <h2><span class="paso">4</span>La regla</h2>
+          <p class="pista">El mensaje trae <code>nivel</code>, <code>temp</code> y <code>alarma</code>. Lo demás lo añade la consulta.</p>
+
+          <div class="fila">
+            <label class="interruptor">
+              <input type="checkbox" v-model="e.anadeDispositivo">
+              añadir <code>topic(3)</code> como <b>{{ e.clavePart || '—' }}</b>
+            </label>
+          </div>
+          <div class="fila">
+            <label class="interruptor">
+              <input type="checkbox" v-model="e.anadeMomento">
+              añadir <code>parse_time(...)</code> como <b>{{ e.claveOrden || '—' }}</b>
+            </label>
+          </div>
+          <div class="fila">
+            <label class="interruptor"><input type="checkbox" v-model="e.conWhere"> filtrar con <code>WHERE</code></label>
+          </div>
+          <div class="fila" v-if="e.conWhere">
+            <span class="etiqueta">Condición</span>
+            <input type="text" v-model="e.condicion">
+          </div>
+        </div>
+
+        <!-- 5 -->
+        <div class="tarjeta">
+          <h2><span class="paso">5</span>¿Ya desplegaste esta pila antes?</h2>
+          <div class="fila">
+            <label class="interruptor"><input type="checkbox" v-model="e.yaDesplegado"> sí, ya la desplegué</label>
+          </div>
+          <p class="nota">Marcarlo no cambia el YAML: solo activa un aviso sobre lo que pasa al cambiar una clave de una tabla que ya tiene datos.</p>
+        </div>
+
+      </section>
+
+      <!-- ========================================= columna del YAML -->
+      <section>
+
+        <div class="tarjeta">
+          <h2>Lo que llevas escrito</h2>
+          <p class="pista">Esto es el archivo, no una vista previa.</p>
+          <pre class="yaml" v-html="yamlColoreado"></pre>
+        </div>
+
+        <div class="tarjeta">
+          <h2>¿Encajan las piezas?</h2>
+          <p class="pista">Nada de esto bloquea nada. Puedes desplegar una plantilla rota: son datos de prueba.</p>
+          <div v-for="(a, i) in avisos" :key="i" class="aviso" :class="a.nivel">{{ a.texto }}</div>
+        </div>
+
+        <div class="tarjeta">
+          <h2>Guardar y desplegar</h2>
+          <p class="pista">El archivo se escribe en tu disco. No tienes que copiar nada.</p>
+
+          <button class="btn btn-primario" @click="guardar" :disabled="guardando">
+            {{ guardando ? 'Guardando...' : 'Guardar plantilla' }}
+          </button>
+
+          <div v-if="rutaGuardada" class="guardado">
+            Guardada en <span class="ruta">{{ rutaGuardada }}</span>
+          </div>
+
+          <p class="nota" v-if="rutaGuardada">Ahora, en tu terminal:</p>
+          <pre class="comando" v-if="rutaGuardada">{{ comando }}</pre>
+
+          <p class="nota" v-if="rutaGuardada">
+            Tu nombre quedó como valor por defecto del parámetro, así que el
+            comando no necesita pasárselo. Pero sigue siendo un parámetro: para
+            desplegar esta misma plantilla para otro equipo, sin editar el
+            archivo, sería
+            <code>--parameter-overrides NombreObjeto=otro-equipo</code>.
+          </p>
+        </div>
+
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="vendor/vue.global.prod.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

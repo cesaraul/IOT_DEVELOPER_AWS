@@ -24,6 +24,9 @@ certificates/
 # acabar en el repositorio del curso. Las plantillas (politica-*.json) sí se
 # suben: son las que llevan REGION y CUENTA sin rellenar.
 **/mi-politica*.json
+# La plantilla que genera cada alumno con el constructor. Lleva su nombre
+# dentro y es distinta para cada uno: la que se publica es infra/clase6.yaml.
+**/mi-clase6.yaml
 
 # El sketch del ESP32 necesita los certificados compilados dentro. Van en un
 # secretos.h generado en local, nunca en el .ino, que sí se publica.

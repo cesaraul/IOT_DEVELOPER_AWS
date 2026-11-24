@@ -1,0 +1,29 @@
+name: constructor-cloudformation
+
+# El constructor de plantillas.
+#
+#   docker compose up
+#   y abre  http://localhost:8081
+#
+# Va en el 8081 porque el simulador de reglas de la clase 5 usa el 8080:
+# así puedes tener los dos abiertos. Si el 8081 también estuviera ocupado,
+# cambia el primer número de la línea "ports" y entra por ese.
+
+services:
+  constructor:
+    build: .
+    container_name: constructor-cfn
+    ports:
+      - "8081:80"
+    environment:
+      # La ruta tal como la ves TÚ, para que el comando que aparece en
+      # pantalla se pueda ejecutar tal cual.
+      RUTA_HOST: labs/06-almacenamiento/mi-clase6.yaml
+      NOMBRE_ARCHIVO: mi-clase6.yaml
+    volumes:
+      # La carpeta del laboratorio, para poder escribir ahí la plantilla.
+      # Es el único sitio del disco al que llega esta herramienta.
+      - ../:/salida
+      # El código, para poder editarlo sin reconstruir la imagen.
+      - ./web:/srv/web:ro
+      - ./servidor.py:/srv/servidor.py:ro
