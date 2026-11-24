@@ -46,6 +46,21 @@ Si tienes más de una cuenta de AWS, el CLI apunta a **una sola** y no
 necesariamente a la que crees. Desplegar en la cuenta equivocada no da
 ningún error: crea todo donde no querías.
 
+**Si el número que sale no es el de tu cuenta del curso**, configura un
+perfil con nombre y úsalo en todos los comandos de aquí en adelante:
+
+```bash
+aws configure --profile curso
+```
+
+```bash
+aws sts get-caller-identity --profile curso
+```
+
+A partir de ahí, a cada comando de este laboratorio le añades
+`--profile curso` al final. Está explicado en
+[la guía de acceso](../../docs/acceso-desde-tu-laptop.md).
+
 ---
 
 ## Paso 1 · Leer la plantilla antes de ejecutarla

@@ -133,6 +133,42 @@ Ahora sí, cierra la pantalla de AWS.
 > **IAM → tu usuario → Credenciales de seguridad** y **bórrala**. Crear otra
 > toma treinta segundos; que alguien mine criptomonedas en tu cuenta, no.
 
+## Paso 4-bis · Si tienes más de una cuenta de AWS
+
+A partir de la clase 6 vas a usar también el **AWS CLI**, y ahí hay una
+trampa: el CLI apunta a **una sola** cuenta, la que esté como `default`. Si
+tienes la del curso y otra del trabajo, es fácil acabar creando cosas donde
+no querías — y eso **no da ningún error**.
+
+La solución es un **perfil con nombre**:
+
+```bash
+aws configure --profile curso
+```
+
+Te pide el id de clave, la clave secreta, la región (`us-east-2`) y el
+formato (`json`). A partir de ahí, todos los comandos del curso llevan
+`--profile curso` al final:
+
+```bash
+aws sts get-caller-identity --profile curso
+```
+
+Tiene que devolverte el número de la cuenta del curso. **Si no, no sigas.**
+
+### Dónde viven esas credenciales
+
+En `C:\Users\TU-USUARIO\.aws\credentials` (en macOS y Linux, `~/.aws/`), en
+texto plano. Es el sitio estándar y está fuera de cualquier repositorio.
+
+> **No las guardes dentro de la carpeta de un proyecto**, ni siquiera en una
+> excluida del repositorio. Un `.gitignore` protege del `git commit`, pero no
+> de comprimir la carpeta para mandársela a alguien, ni de una copia de
+> seguridad que sincronice el directorio. Y el archivo CSV que descarga la
+> consola, con su nombre por defecto, le dice a cualquiera lo que hay dentro.
+>
+> Un solo sitio, el estándar, fuera del proyecto.
+
 ## Paso 5 · Comprobar que funciona
 
 Desde la carpeta del laboratorio 04:
