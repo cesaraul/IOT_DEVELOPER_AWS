@@ -95,7 +95,7 @@ export function construirUrl(base, e) {
 
 export function construirCurl(base, e) {
   const url = construirUrl(base, e);
-  return url ? `curl -s '${url}' | python -m json.tool` : "";
+  return url ? `curl.exe -s "${url}"` : "";
 }
 
 // ---------------------------------------------------------------------

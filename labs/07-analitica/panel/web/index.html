@@ -136,7 +136,10 @@
               <pre class="comando">{{ curl }}</pre>
               <p class="nota">
                 Si esto funciona y el panel no, el problema está en el navegador
-                (CORS), no en la Lambda. Buen reflejo para tener.
+                (CORS), no en la Lambda. Y ojo: <strong>curl no comprueba
+                CORS</strong>, así que puede darte un 200 perfecto mientras el
+                navegador rechaza esa misma respuesta. Para eso está la pestaña
+                de red de las herramientas de desarrollador.
               </p>
             </div>
           </details>

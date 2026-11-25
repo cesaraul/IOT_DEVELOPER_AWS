@@ -106,8 +106,14 @@ Resources:
           s3 = boto3.client("s3")
           BUCKET = os.environ["BUCKET"]
 
-          CABECERAS = {"Content-Type": "application/json",
-                       "Access-Control-Allow-Origin": "*"}
+          # Aqui NO va Access-Control-Allow-Origin, y cuesta un rato
+          # entender por que. La pone sola la Function URL, por el
+          # bloque Cors de mas abajo. Si ademas la devuelve el codigo,
+          # la respuesta sale con la cabecera DOS veces y el navegador
+          # rechaza la respuesta entera:
+          #     CORS (MultipleAllowOriginValues)
+          # Lo peor es que con curl no se nota: solo falla el navegador.
+          CABECERAS = {"Content-Type": "application/json"}
 
           def limpiar(x):
               # DynamoDB devuelve Decimal para no perder precision; JSON

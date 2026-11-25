@@ -161,7 +161,8 @@ de lo que va este oficio.
 | `403 Forbidden` al llamar la URL | Faltan permisos de invocación. La plantilla trae los **dos** que hacen falta desde octubre de 2025; si copiaste un ejemplo de internet, seguramente solo trae uno |
 | `{"filas": []}` | La tabla no tiene nada de ese `dispositivo`, o el nombre no coincide exactamente |
 | `AccessDeniedException` en la respuesta | El rol de la Lambda no tiene ese permiso. Se arregla en la plantilla y se vuelve a desplegar, no en la consola |
-| El `curl` funciona y el panel no | Es CORS: el navegador exige que la respuesta lo autorice. Lo pone la función en sus cabeceras, y la URL en su configuración |
+| El `curl` funciona y el panel no | Es CORS, y es el error más traicionero del día: **`curl` no comprueba CORS**. Puede darte un 200 impecable mientras el navegador rechaza esa misma respuesta. Míralo en la pestaña **Red** de las herramientas de desarrollador (F12), no en la terminal |
+| `CORS (MultipleAllowOriginValues)` | La cabecera `Access-Control-Allow-Origin` va **dos veces**: la pone la Function URL por su bloque `Cors`, y la estaba poniendo también el código. Se quita de uno de los dos. Nos pasó montando esta clase |
 | La ventana de tiempo no devuelve nada | El `momento` está en **UTC**. El panel convierte tu hora local; si preguntas con `curl` a mano, conviértela tú |
 | Tarda 3 segundos la primera vez | Es el arranque en frío. La segunda vuela: el contenedor sigue vivo. Lo mismo de la clase 5 |
 
