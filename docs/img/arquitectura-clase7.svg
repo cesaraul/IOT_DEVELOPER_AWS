@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="1000" height="620" role="img" aria-label="El navegador pregunta por HTTPS a una Lambda, que lee DynamoDB y S3 y contesta. En paralelo, una regla de IoT manda el nivel a CloudWatch sin escribir codigo.">
+<title>Preguntar y ver</title>
+<desc>Hasta ahora los datos entraban. Aqui la flecha se invierte: el panel que corre en tu laptop manda una pregunta por HTTPS a tu funcion Lambda, que es quien tiene los permisos. La Lambda lee DynamoDB o S3 segun lo que se le pregunte y devuelve la respuesta en JSON. El navegador nunca tiene credenciales de AWS. Abajo, en paralelo, una segunda regla de IoT Core convierte el nivel en una metrica de CloudWatch sin que haya que programar nada.</desc>
+
+<defs>
+<marker id="c7Al" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#0D6E6E"/></marker>
+<marker id="c7Ro" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#D94F6E"/></marker>
+<marker id="c7Gr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#B9C2CC"/></marker>
+</defs>
+
+<rect width="1000" height="620" fill="#FFFFFF"/>
+<text x="500" y="56" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#0D6E6E">Preguntar y ver</text>
+
+<g font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" text-anchor="middle">
+
+<!-- ===================================================== navegador -->
+<rect x="25" y="150" width="175" height="130" rx="14" fill="#D94F6E"/>
+<text x="112" y="190" font-size="23" font-weight="700" fill="#FFFFFF">Tu navegador</text>
+<text x="112" y="216" font-size="14" fill="#FFFFFF">el panel, en tu laptop</text>
+<line x1="48" y1="232" x2="177" y2="232" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="1.5"/>
+<text x="112" y="256" font-size="14" font-weight="700" fill="#FFE1E8">sin credenciales</text>
+<text x="112" y="272" font-size="14" font-weight="700" fill="#FFE1E8">de AWS</text>
+
+<!-- ======================================================= la nube -->
+<rect x="300" y="105" width="310" height="240" rx="16" fill="#E6F5F3" stroke="#0D6E6E" stroke-width="3"/>
+<text x="455" y="138" font-size="21" font-weight="600" fill="#0B5C5C">Tu cuenta de AWS</text>
+
+<rect x="328" y="158" width="254" height="158" rx="12" fill="#FFFFFF" stroke="#0D6E6E" stroke-width="2.5"/>
+<text x="455" y="194" font-size="22" font-weight="700" fill="#0B5C5C">Lambda: la API</text>
+<text x="455" y="222" font-size="15" fill="#16202B">recibe la pregunta,</text>
+<text x="455" y="244" font-size="15" fill="#16202B">busca y contesta</text>
+<line x1="352" y1="264" x2="558" y2="264" stroke="#D7E3E1" stroke-width="2"/>
+<text x="455" y="291" font-size="16" font-weight="700" fill="#D94F6E">su rol: solo LEER</text>
+
+<!-- ===================================================== los datos -->
+<rect x="680" y="120" width="285" height="92" rx="14" fill="#0D6E6E"/>
+<text x="822" y="158" font-size="23" font-weight="700" fill="#FFFFFF">DynamoDB</text>
+<text x="822" y="186" font-size="15" fill="#CDEAE6">cómo está ahora</text>
+
+<rect x="680" y="236" width="285" height="92" rx="14" fill="#16202B"/>
+<text x="822" y="274" font-size="23" font-weight="700" fill="#FFFFFF">S3</text>
+<text x="822" y="302" font-size="15" fill="#8FD6D0">qué pasó aquel día</text>
+
+<!-- =============================================== la otra mitad -->
+<line x1="60" y1="372" x2="940" y2="372" stroke="#E3E7EC" stroke-width="2"/>
+<text x="500" y="402" font-size="17" font-style="italic" fill="#8A94A0">Y a la vez, sin escribir una línea de código:</text>
+
+<rect x="160" y="424" width="235" height="86" rx="12" fill="#F6F7F9" stroke="#B9C2CC" stroke-width="2"/>
+<text x="277" y="456" font-size="19" font-weight="700" fill="#4A5663">Regla: métricas</text>
+<text x="277" y="482" font-size="14" fill="#4A5663">la misma telemetría</text>
+
+<rect x="605" y="424" width="235" height="86" rx="12" fill="#F6F7F9" stroke="#B9C2CC" stroke-width="2"/>
+<text x="722" y="456" font-size="19" font-weight="700" fill="#4A5663">CloudWatch</text>
+<text x="722" y="482" font-size="14" fill="#4A5663">una curva, ya dibujada</text>
+
+<text x="500" y="455" font-size="14" fill="#8A94A0">acción CloudwatchMetric</text>
+</g>
+
+<!-- la pregunta va, la respuesta vuelve -->
+<g stroke="#0D6E6E" stroke-width="3.5" fill="none" marker-end="url(#c7Al)">
+<path d="M203 192 L 295 192"/>
+<path d="M614 200 L 644 200 L 644 166 L 674 166"/>
+<path d="M614 250 L 644 250 L 644 282 L 674 282"/>
+</g>
+<g stroke="#D94F6E" stroke-width="3" fill="none" marker-end="url(#c7Ro)" stroke-dasharray="7 5">
+<path d="M295 252 L 205 252"/>
+</g>
+
+<g font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" text-anchor="middle">
+<text x="249" y="180" font-size="13.5" font-weight="700" fill="#0B5C5C">la pregunta</text>
+<text x="249" y="276" font-size="13.5" font-weight="700" fill="#D94F6E">la respuesta</text>
+</g>
+
+<g stroke="#B9C2CC" stroke-width="3" fill="none" marker-end="url(#c7Gr)">
+<path d="M399 467 L 597 467"/>
+</g>
+
+<text x="500" y="556" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="24" fill="#4A5663">El navegador no tiene credenciales: los permisos los tiene la Lambda.</text>
+<text x="500" y="590" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="23" fill="#4A5663">El panel lo construyes tú. La métrica ya venía hecha.</text>
+</svg>
