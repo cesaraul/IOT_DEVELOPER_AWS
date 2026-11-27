@@ -28,11 +28,31 @@ Lo importante es **qué rama no se enciende**. Si el nivel va bajo, la rama de
 la alarma se queda apagada: ahí estás viendo un `WHERE` funcionar, no leyendo
 sobre él.
 
-Hay un interruptor, **«ver qué autoriza cada flecha»**, que reetiqueta todo el
-dibujo con el permiso que hace posible cada paso: el certificado X.509 del
-dispositivo, el rol de IAM de cada regla, la política de recurso de la Lambda,
-y el «nadie» de la Function URL. Es la vista que explica por qué los tres tipos
-de identidad del curso no son lo mismo.
+El mismo dibujo tiene **tres modos**:
+
+| Modo | Qué enseña |
+|---|---|
+| **Qué pasa** | Las flechas con lo que viaja por ellas, y el parpadeo en vivo |
+| **Qué lo autoriza** | Reetiqueta cada flecha con el permiso que la hace posible: el certificado X.509, el rol de IAM de cada regla, la política de recurso de la Lambda, y el «nadie» de la Function URL. Es la vista que explica por qué los tres tipos de identidad del curso no son lo mismo |
+| **Qué se rompe** | Pinchas una caja, la quitas, y el dibujo marca qué deja de funcionar y qué solo se queda sin datos |
+
+Ese tercer modo es el que más cuesta enseñar de otra forma, porque en un
+dibujo normal **una flecha parece que existe porque sí**. Y distingue dos
+cosas que no son lo mismo: *deja de funcionar* (rojo) y *se queda sin datos
+nuevos, pero sigue en pie* (ámbar).
+
+Los casos interesantes son los que no se adivinan:
+
+- Quitas **DynamoDB** y la regla de guardar **no se cae entera**: su otra
+  acción sigue escribiendo en S3. Una regla con dos acciones falla a medias.
+- Quitas **S3** y la API sigue contestando «cómo está ahora»; solo falla la
+  pregunta del día completo.
+- Quitas la **regla de alarmas** y no se rompe nada: el sistema sigue
+  guardando tan tranquilo. Simplemente nadie se entera de nada.
+
+> El modelo de dependencias está escrito a mano en `arquitectura.py`, no
+> deducido del grafo. Un algoritmo genérico del tipo «todo lo que cuelga de
+> aquí se cae» se equivoca justo en esos tres casos, que son los que enseñan.
 
 > **Esto no espía el broker.** Mira lo que llegó a la tabla. Cada fila es la
 > prueba de que la cadena entera funcionó: publicó el dispositivo, lo recibió

@@ -50,10 +50,14 @@
     <!-- ============================================== ARQUITECTURA -->
     <section v-show="vista === 'arquitectura'">
       <div class="herramientas">
-        <label class="interruptor">
-          <input type="checkbox" v-model="verPermisos">
-          <span>Ver <strong>qué autoriza</strong> cada flecha</span>
-        </label>
+        <div class="modos">
+          <button v-for="m in modos" :key="m.id"
+                  :class="{ puesto: modo === m.id }"
+                  @click="modo = m.id; roto = null">{{ m.titulo }}</button>
+        </div>
+        <span class="pista-modo" v-if="modo === 'dependencias'">
+          Pincha una caja para quitarla y ver qué deja de funcionar.
+        </span>
         <div class="ultimo" v-if="ultimaFila">
           <span v-if="parado" class="parado">tu equipo no está publicando</span>
           Último mensaje <strong>{{ antiguedad }}</strong>
@@ -64,7 +68,8 @@
       </div>
 
       <div class="lienzo">
-        <svg :viewBox="'0 0 ' + lienzo.w + ' ' + lienzo.h">
+        <svg :viewBox="'0 0 ' + lienzo.w + ' ' + lienzo.h"
+             :style="{ aspectRatio: lienzo.w + ' / ' + lienzo.h }">
           <defs>
             <marker id="p" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
               <path d="M0,0 L9,4.5 L0,9 z" fill="#B9C2CC"/>
@@ -77,29 +82,65 @@
           <!-- flechas -->
           <g class="aristas">
             <path v-for="(a, i) in aristasDibujo" :key="'a'+i"
-                  :d="a.d" :class="['arista', { viva: ramasVivas.includes(a.rama) }]"
-                  :marker-end="ramasVivas.includes(a.rama) ? 'url(#pv)' : 'url(#p)'"></path>
+                  :d="a.d"
+                  :class="['arista', { viva: ramasVivas.includes(a.rama) && !roto,
+                                       muerta: aristaMuerta(a) }]"
+                  :marker-end="ramasVivas.includes(a.rama) && !roto ? 'url(#pv)' : 'url(#p)'"></path>
             <text v-for="(a, i) in aristasDibujo" :key="'t'+i"
                   :x="a.m.x" :y="a.m.y" class="etiqueta-arista"
-                  :class="{ permiso: verPermisos }">
-              {{ verPermisos ? a.autoriza : a.etiqueta }}
+                  :class="{ permiso: modo === 'permisos' }">
+              {{ modo === 'permisos' ? a.autoriza : a.etiqueta }}
             </text>
           </g>
 
           <!-- cajas -->
           <g class="nodos">
-            <g v-for="n in nodos" :key="n.id" @click="abrir(n)"
-               :class="['nodo', n.familia, { elegido: detalle && detalle.id === n.id }]">
+            <g v-for="n in nodos" :key="n.id" @click="clicNodo(n)"
+               :class="['nodo', n.familia, {
+                 elegido: detalle && detalle.id === n.id,
+                 quitado: roto === n.id,
+                 afectado: efectos[n.id] && !efectos[n.id].grave,
+                 caido: efectos[n.id] && efectos[n.id].grave,
+                 intacto: roto && roto !== n.id && !efectos[n.id] }]">
               <rect :x="n.x" :y="n.y" :width="n.w" :height="n.h" rx="12"></rect>
               <text :x="n.x + n.w/2" :y="n.y + 30" class="t1">{{ n.titulo }}</text>
               <text :x="n.x + n.w/2" :y="n.y + 50" class="t2">{{ n.servicio }}</text>
               <text :x="n.x + n.w/2" :y="n.y + 66" class="t3">clase {{ n.clase }}</text>
+              <text v-if="roto === n.id" :x="n.x + n.w/2" :y="n.y - 8"
+                    class="marca">lo quitamos</text>
+              <text v-else-if="efectos[n.id]" :x="n.x + n.w/2" :y="n.y - 8"
+                    :class="['marca', efectos[n.id].grave ? 'grave' : 'medio']">
+                {{ efectos[n.id].grave ? 'deja de funcionar' : 'se queda sin datos' }}
+              </text>
             </g>
           </g>
         </svg>
       </div>
 
-      <p class="letra-pequena">
+      <!-- la lista de consecuencias -->
+      <div class="consecuencias" v-if="roto">
+        <h3>Si quitas <strong>{{ nodoPorId(roto).titulo }}</strong></h3>
+        <ul v-if="nodoPorId(roto).si_falta.length">
+          <li v-for="f in nodoPorId(roto).si_falta" :key="f.nodo"
+              :class="f.grave ? 'grave' : 'medio'">
+            <strong>{{ nodoPorId(f.nodo).titulo }}</strong> — {{ f.efecto }}
+          </li>
+        </ul>
+        <p v-else class="nota">
+          No se rompe nada más. Es el final de su rama: lo que se pierde es lo
+          que hacía él.
+        </p>
+        <button class="btn-plano" @click="roto = null">Volver a montarlo</button>
+      </div>
+
+      <p class="letra-pequena" v-if="modo === 'dependencias' && !roto">
+        Las dependencias son lo que más cuesta ver en un dibujo: una flecha
+        parece que existe porque sí. Fíjate en los casos raros — al quitar
+        DynamoDB, la regla de guardar <strong>no se cae entera</strong>, porque
+        su otra acción sigue escribiendo en S3.
+      </p>
+
+      <p class="letra-pequena" v-if="modo !== 'dependencias'">
         Esto <strong>no espía el broker</strong>: mira lo que llegó a la tabla.
         Cada fila es la prueba de que la cadena entera funcionó — publicó el
         dispositivo, lo recibió IoT Core, encajó la regla y se escribió.
@@ -229,6 +270,16 @@
         <p class="parrafo">{{ detalle.como_lo_usamos }}</p>
         <h3>Lo que cuesta</h3>
         <p class="parrafo coste">{{ detalle.coste }}</p>
+        <h3>Si esto falta</h3>
+        <ul class="lista-falta" v-if="detalle.si_falta && detalle.si_falta.length">
+          <li v-for="f in detalle.si_falta" :key="f.nodo"
+              :class="f.grave ? 'grave' : 'medio'">
+            <strong>{{ nodoPorId(f.nodo).titulo }}</strong> — {{ f.efecto }}
+          </li>
+        </ul>
+        <p class="parrafo" v-else>
+          No se rompe nada más: es el final de su rama.
+        </p>
       </div>
 
       <div v-if="pestanaDetalle === 'Cómo lo creamos'">

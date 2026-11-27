@@ -23,7 +23,13 @@ createApp({
       demo: false,
       motivo: "",
 
-      verPermisos: false,
+      modo: "normal",
+      modos: [
+        { id: "normal", titulo: "Qué pasa" },
+        { id: "permisos", titulo: "Qué lo autoriza" },
+        { id: "dependencias", titulo: "Qué se rompe" },
+      ],
+      roto: null,
       ramasVivas: [],
       ultimaFila: null,
       cuandoLlego: null,
@@ -54,6 +60,15 @@ createApp({
           d: ruta(por[a.de], por[a.a], i),
           m: medio(por[a.de], por[a.a]),
         }));
+    },
+
+    // Lo que le pasa a cada caja si quitamos la que está seleccionada.
+    efectos() {
+      const n = this.nodoPorId(this.roto);
+      if (!n || !n.si_falta) return {};
+      const m = {};
+      n.si_falta.forEach((f) => { m[f.nodo] = f; });
+      return m;
     },
 
     filas() {
@@ -112,7 +127,10 @@ createApp({
     this.motivo = a.motivo;
 
     this.escuchar();
-    setInterval(() => { this.ahora = Date.now(); }, 1000);
+    // Cada cinco segundos, no cada uno: «hace 40 s» no necesita más
+    // precisión, y tocar una propiedad reactiva repinta el dibujo
+    // entero. A un segundo, la página no para quieta nunca.
+    setInterval(() => { this.ahora = Date.now(); }, 5000);
     this.pedirEstado();
     setInterval(() => this.pedirEstado(), 30000);
     this.pedirDatos();
@@ -147,6 +165,29 @@ createApp({
       try {
         this.estado = await (await fetch("/api/estado")).json();
       } catch (e) { /* la vista aguanta sin estado */ }
+    },
+
+    nodoPorId(id) {
+      return this.nodos.find((n) => n.id === id) || null;
+    },
+
+    // En el modo de dependencias el clic quita la caja en vez de abrir
+    // su ficha: en un proyector, pasar el ratón no se ve.
+    clicNodo(n) {
+      if (this.modo === "dependencias") {
+        this.roto = this.roto === n.id ? null : n.id;
+        return;
+      }
+      this.abrir(n);
+    },
+
+    // Una flecha muere si toca la caja que quitamos, o si sale de algo
+    // que ha dejado de funcionar.
+    aristaMuerta(a) {
+      if (!this.roto) return false;
+      if (a.de === this.roto || a.a === this.roto) return true;
+      const e = this.efectos[a.de];
+      return !!(e && e.grave);
     },
 
     async abrir(n) {

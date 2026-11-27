@@ -302,6 +302,84 @@ ARISTAS = [
 
 
 # ---------------------------------------------------------------------
+#  Qué se rompe si quitas una caja
+# ---------------------------------------------------------------------
+#  Esto está escrito a mano, nodo por nodo, y no deducido del grafo a
+#  propósito. Un algoritmo genérico "todo lo que cuelga de aquí se cae"
+#  se equivoca justo en los casos que más enseñan:
+#
+#    · Si quitas DynamoDB, la regla de guardar NO se cae entera: su otra
+#      acción sigue escribiendo en S3. Una regla con dos acciones falla
+#      a medias, y eso hay que decirlo.
+#    · Si quitas S3, la API sigue respondiendo a "cómo está ahora" y
+#      solo falla la pregunta del día completo.
+#    · Si quitas la regla de alarmas, no se cae nada: simplemente deja
+#      de avisar. El sistema sigue guardando y nadie se entera.
+#
+#  "grave" marca lo que deja de funcionar; sin él, lo que solo se queda
+#  sin datos nuevos.
+# ---------------------------------------------------------------------
+
+SI_FALTA = {
+    "dispositivo": [
+        ("iotcore", "no entra nada: el broker se queda sin tráfico", False),
+        ("regla_guardar", "no se activa nunca", False),
+        ("regla_alarmas", "no se activa nunca", False),
+        ("regla_metrica", "no se activa nunca", False),
+        ("dynamodb", "deja de crecer; lo guardado sigue ahí", False),
+        ("s3", "deja de crecer; lo guardado sigue ahí", False),
+        ("cloudwatch", "la curva se queda plana", False),
+        ("sns", "no llega ningún aviso", False),
+        ("api", "sigue en pie y contesta, pero solo lo viejo", False),
+    ],
+    "iotcore": [
+        ("regla_guardar", "las reglas viven dentro: desaparecen con él", True),
+        ("regla_alarmas", "las reglas viven dentro: desaparecen con él", True),
+        ("regla_metrica", "las reglas viven dentro: desaparecen con él", True),
+        ("dispositivo", "no tiene dónde publicar; se queda reintentando", True),
+        ("dynamodb", "deja de recibir", False),
+        ("s3", "deja de recibir", False),
+        ("sns", "no llega ningún aviso", False),
+        ("cloudwatch", "sin métrica", False),
+    ],
+    "regla_guardar": [
+        ("dynamodb", "deja de recibir filas", False),
+        ("s3", "deja de recibir archivos", False),
+        ("api", "contestará listas vacías: no hay nada nuevo que leer", False),
+    ],
+    "regla_alarmas": [
+        ("lambda_alarma", "no se invoca nunca", True),
+        ("sns", "no se publica nada", True),
+    ],
+    "regla_metrica": [
+        ("cloudwatch", "sin métrica que dibujar", True),
+    ],
+    "dynamodb": [
+        ("regla_guardar", "su acción de DynamoDB falla; la de S3 sigue escribiendo", False),
+        ("api", "la pregunta «cómo está ahora» falla; el día completo sigue", False),
+    ],
+    "s3": [
+        ("regla_guardar", "su acción de S3 falla; la de DynamoDB sigue escribiendo", False),
+        ("api", "la pregunta del día completo falla; las últimas lecturas siguen", False),
+    ],
+    "lambda_alarma": [
+        ("sns", "nadie publica en el tema", True),
+    ],
+    "sns": [],
+    "cloudwatch": [],
+    "api": [
+        ("navegador", "el panel no tiene a quién preguntar", True),
+    ],
+    "navegador": [],
+}
+
+
+def si_falta(nodo_id):
+    return [{"nodo": n, "efecto": e, "grave": g}
+            for n, e, g in SI_FALTA.get(nodo_id, [])]
+
+
+# ---------------------------------------------------------------------
 #  Sacar un recurso de la plantilla, con sus comentarios
 # ---------------------------------------------------------------------
 #  A propósito NO se usa un analizador de YAML: PyYAML devolvería la
@@ -367,7 +445,9 @@ def yaml_de(nodo_id):
 def para_la_pagina():
     """Lo que la página necesita para dibujar, sin el YAML (va aparte)."""
     return {
-        "nodos": [{k: v for k, v in n.items()} for n in NODOS],
+        "nodos": [dict(n, si_falta=si_falta(n["id"])) for n in NODOS],
         "aristas": ARISTAS,
-        "lienzo": {"w": 1200, "h": 640},
+        # El alto va justo por debajo de la caja más baja (544) más un
+        # respiro para las etiquetas que cuelgan encima de los nodos.
+        "lienzo": {"w": 1200, "h": 568},
     }

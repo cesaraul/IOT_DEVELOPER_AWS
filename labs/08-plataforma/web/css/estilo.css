@@ -107,9 +107,10 @@ main { padding: 18px 22px 60px; }
   border-radius: 14px; padding: 10px;
 }
 /* Un <svg> con viewBox pero sin atributos width/height cae al alto por
-   defecto de 150px. El aspect-ratio lo fija y el dibujo deja de salir
-   recortado. */
-.lienzo svg { width: 100%; height: auto; display: block; aspect-ratio: 1200 / 640; }
+   defecto de 150px y el dibujo sale recortado. El aspect-ratio lo fija,
+   y se pone desde el modelo (style en línea) para no tener la medida
+   escrita en dos sitios. */
+.lienzo svg { width: 100%; height: auto; display: block; }
 
 .nodo { cursor: pointer; }
 .nodo rect { fill: var(--papel); stroke: var(--borde); stroke-width: 2; transition: all .15s; }
@@ -149,6 +150,55 @@ main { padding: 18px 22px 60px; }
 .etiqueta-arista.permiso { fill: var(--acento); font-size: 10px; }
 
 .letra-pequena { font-size: 13.5px; color: var(--suave); margin-top: 12px; max-width: 900px; }
+
+/* ------------------------------------------------- qué se rompe */
+
+.modos { display: flex; gap: 0; border: 1px solid var(--borde); border-radius: 9px; overflow: hidden; }
+.modos button {
+  border: none; background: var(--papel); color: var(--suave); cursor: pointer;
+  font: inherit; font-size: 14px; padding: 7px 15px;
+}
+.modos button + button { border-left: 1px solid var(--borde); }
+.modos button.puesto { background: var(--mqtt); color: #fff; font-weight: 700; }
+.pista-modo { font-size: 13.5px; color: var(--aviso); }
+
+/* La caja que quitamos: tachada y apagada. */
+.nodo.quitado rect { opacity: .25; stroke-dasharray: 5 4; }
+.nodo.quitado text { opacity: .3; }
+
+/* Deja de funcionar. */
+.nodo.caido rect { stroke: var(--grave) !important; stroke-width: 3.5; opacity: .55; }
+.nodo.caido text { opacity: .6; }
+
+/* Sigue en pie pero sin datos nuevos. */
+.nodo.afectado rect { stroke: var(--aviso) !important; stroke-width: 3; stroke-dasharray: 7 4; }
+
+/* Lo que no se entera de nada se queda al fondo. */
+.nodo.intacto { opacity: .35; }
+
+.marca {
+  font-size: 11px; font-weight: 700; text-anchor: middle; fill: var(--suave);
+}
+.marca.grave { fill: var(--grave); }
+.marca.medio { fill: var(--aviso); }
+
+.arista.muerta { stroke: var(--grave); stroke-dasharray: 3 5; opacity: .45; }
+
+.consecuencias {
+  margin-top: 14px; background: var(--papel); border: 1px solid var(--borde);
+  border-radius: 13px; padding: 14px 18px;
+}
+.consecuencias h3 { margin: 0 0 8px; font-size: 16px; }
+.consecuencias ul, .lista-falta { margin: 0; padding-left: 20px; }
+.consecuencias li, .lista-falta li { font-size: 14.5px; margin: 5px 0; }
+.consecuencias li.grave, .lista-falta li.grave { color: var(--grave); }
+.consecuencias li.medio, .lista-falta li.medio { color: var(--aviso); }
+.lista-falta { margin-top: 6px; }
+.btn-plano {
+  margin-top: 12px; border: 1px solid var(--borde); background: var(--papel);
+  color: var(--texto); padding: 6px 14px; border-radius: 8px; cursor: pointer; font: inherit;
+  font-size: 14px;
+}
 
 /* -------------------------------------------------------- servicios */
 .tarjetas-servicio {
