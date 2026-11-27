@@ -1,0 +1,42 @@
+name: plataforma-iot
+
+# La plataforma de la clase 8.
+#
+#   docker compose up
+#   y abre  http://localhost:8083
+#
+# Va en el 8083 porque los otros tres ya están cogidos: 8080 el simulador
+# de reglas (clase 5), 8081 el constructor de plantillas (clase 6) y 8082
+# el panel (clase 7).
+
+services:
+  plataforma:
+    build: .
+    container_name: plataforma-iot
+    ports:
+      - "8083:80"
+
+    environment:
+      # Tu equipo, el mismo de todas las clases.
+      NOMBRE_OBJETO: demo-clase3
+      AWS_REGION: us-east-2
+      # El perfil del curso. Si lo dejas vacío usa las credenciales por
+      # defecto; si no hay ninguna, la plataforma arranca en modo
+      # demostración y sigue funcionando.
+      AWS_PROFILE: curso
+      PLANTILLA: /plantilla/laboratorio.yaml
+
+    volumes:
+      # Tus credenciales, SOLO LECTURA y solo para el contenedor. No se
+      # copian a la imagen y no bajan nunca al navegador.
+      #
+      # En Mac o Linux cambia ${USERPROFILE} por ${HOME}.
+      - ${USERPROFILE}/.aws:/root/.aws:ro
+
+      # La plantilla del curso: de aquí sale el YAML que enseña cada nodo.
+      - ../../infra:/plantilla:ro
+
+      # El código, para poder tocarlo sin reconstruir la imagen.
+      - ./web:/srv/web:ro
+      - ./servidor.py:/srv/servidor.py:ro
+      - ./arquitectura.py:/srv/arquitectura.py:ro
